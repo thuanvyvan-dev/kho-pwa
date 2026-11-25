@@ -1,10 +1,12 @@
 // Vỏ app cài đặt (PWA) cho Web App Kho / Cân — chạy trên GitHub Pages, không banner Google.
 // - Lấy giao diện từ Web App (/exec?p=ui&app=kho|can), lưu Cache Storage → lần sau mở tức thì, bản mới tải ngầm.
-// - Hiện giao diện trong iframe srcdoc (cùng origin), thay google.script.run bằng gọi API POST {type:'rpc'} có PIN.
-// - Link /exec + PIN chỉ lưu trên máy (localStorage), KHÔNG nằm trong repo công khai này.
+// - Hiện giao diện trong iframe srcdoc (cùng origin), thay google.script.run bằng gọi API POST {type:'rpc'} (không PIN).
+// - Link /exec chỉ lưu trên máy (localStorage), KHÔNG nằm trong repo công khai này.
 (function () {
   var APP = window.APP || 'kho';
   var LS = 'KHO_PWA_CFG';
+  // Nhận mọi dạng link Web App có /macros/s/<id>/ (dán cả link dài cũng được)
+  function execOf_(v) { var m = String(v || '').match(/macros\/s\/([\w-]{20,})/); return m ? 'https://script.google.com/macros/s/' + m[1] + '/exec' : ''; }
   var cfg = {};
   try { cfg = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { cfg = {}; }
   // Link cài lần đầu: .../kho/#u=<link /exec>  (phần sau # không gửi lên máy chủ nào)
@@ -13,11 +15,12 @@
     h.split('&').forEach(function (kv) {
       var i = kv.indexOf('='); if (i < 0) return;
       var k = kv.slice(0, i), v = decodeURIComponent(kv.slice(i + 1));
-      if (k === 'u' && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v)) cfg.exec = v;
+      if (k === 'u') { var ex = execOf_(v); if (ex) cfg.exec = ex; }
     });
     try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) {}
     history.replaceState(null, '', location.pathname + location.search);
   }
+  cfg.pin = '-';   // không PIN (người dùng chốt 25/11)
   var $ = function (id) { return document.getElementById(id); };
   var UI_CACHE = 'kho-ui-v1', UI_KEY = location.pathname.replace(/[^/]*$/, '') + '__ui_' + APP;
 
@@ -42,12 +45,10 @@
     $('sMsg').textContent = msg || '';
     $('sUrl').value = cfg.exec || '';
     $('sUrlBox').style.display = cfg.exec ? 'none' : 'block';
-    $('sPin').value = '';
     $('sGo').onclick = function () {
-      var u = $('sUrl').value.trim(), p = $('sPin').value.trim();
-      if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)) { $('sMsg').textContent = 'Link Web App phải dạng https://script.google.com/macros/s/…/exec'; $('sUrlBox').style.display = 'block'; return; }
-      if (!p) { $('sMsg').textContent = 'Nhập PIN'; return; }
-      cfg.exec = u; cfg.pin = p; $('sMsg').textContent = '⏳ Đang thử…';
+      var u = execOf_($('sUrl').value);
+      if (!u) { $('sMsg').textContent = 'Dán link Web App Kho vào ô trên'; $('sUrlBox').style.display = 'block'; return; }
+      cfg.exec = u; $('sMsg').textContent = '⏳ Đang thử…';
       rpc('apiPing', []).then(function () {
         try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) {}
         s.style.display = 'none'; start();
@@ -109,6 +110,6 @@
   $('upd').onclick = function () { location.reload(); };
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
-  if (!cfg.exec || !cfg.pin) setup(cfg.exec ? 'Nhập PIN (đặt PIN ở link Web App cũ thêm ?p=pin)' : '');
+  if (!cfg.exec) setup('');
   else start();
 })();

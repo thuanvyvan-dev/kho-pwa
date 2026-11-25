@@ -1,5 +1,5 @@
 // Service worker: giữ sẵn vỏ app (mở tức thì, không giật, không cần F5). Không đụng tới lệnh gọi Google.
-var C = 'shell-v1';
+var C = 'shell-v2';
 var FILES = ['./', './index.html', '../shell.js', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(C).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
