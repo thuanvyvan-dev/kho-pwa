@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content, viewport-fit=cover">
+<meta name="theme-color" content="#1e293b">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Kho Hóa Chất</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #f1f5f9; font-family: -apple-system, Roboto, Arial, sans-serif; }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #f1f5f9; }
+  #boot { padding: 40px 16px; text-align: center; color: #475569; font-weight: 700; font-size: 16px; }
+  #setup { display: none; padding: 18px; max-width: 440px; margin: 0 auto; font-size: 16px; color: #0f172a; }
+  #setup input { width: 100%; box-sizing: border-box; font-size: 20px; padding: 10px; border: 2px solid #94a3b8; border-radius: 8px; margin: 4px 0 12px; }
+  #setup button { width: 100%; padding: 14px; font-size: 18px; font-weight: 800; border: none; border-radius: 10px; background: #1e293b; color: #fff; }
+  #sMsg { margin-top: 10px; font-weight: 700; color: #b91c1c; }
+  #upd { display: none; position: fixed; left: 50%; transform: translateX(-50%); top: 6px; z-index: 99999; background: #1e293b; color: #fff; padding: 8px 14px; border-radius: 18px; font-size: 13px; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="boot">⏳ Đang mở Kho Hóa Chất…</div>
+<div id="setup">
+  <h2 style="margin-top:0;">📦 Kho Hóa Chất — cài lần đầu</h2>
+  <div id="sUrlBox">Link Web App (…/exec)<input id="sUrl" type="url" autocomplete="off"></div>
+  PIN<input id="sPin" type="password" inputmode="numeric" autocomplete="off">
+  <button id="sGo">Vào</button>
+  <div id="sMsg"></div>
+  <p style="color:#64748b;font-size:14px;">Link + PIN chỉ lưu trên máy này. Đặt/đổi PIN: mở link Web App cũ, thêm <b>?p=pin</b>.</p>
+</div>
+<div id="upd">🔄 Có bản mới — chạm để dùng</div>
+<script>var APP = 'kho';</script>
+<script src="../shell.js"></script>
+</body>
+</html>
