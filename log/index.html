@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nhật ký kho 资材课</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#111827;--mu:#6b7280;--bd:#e5e7eb;--pri:#2563eb;--warn:#dc2626;--ok:#16a34a}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#1a1d24;--tx:#f3f4f6;--mu:#9ca3af;--bd:#2d323c}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 system-ui,-apple-system,"Microsoft YaHei","Segoe UI",sans-serif;padding:0 12px calc(40px + env(safe-area-inset-bottom))}
+main{max-width:640px;margin:0 auto}
+h2{font-size:14px;margin:18px 2px 8px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
+.row{display:flex;gap:8px;align-items:center}
+.sp{flex:1}
+small,.mu{color:var(--mu);font-size:12px}
+button{font:inherit;color:inherit;border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:10px;cursor:pointer}
+button:active{transform:scale(.97)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.act{min-height:68px;text-align:center;border-left:5px solid var(--c);line-height:1.2}
+.act b{display:block;font-size:17px}
+.act small{display:block}
+.act.on{background:var(--c);color:#fff;border-color:var(--c)}
+.act.on small{color:#fff;opacity:.85}
+.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.bad{color:var(--warn)}
+.now{text-align:center;padding:14px}
+.now .t{font-size:34px;font-variant-numeric:tabular-nums;font-weight:700}
+.now .n{font-size:18px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:5px 10px;border-radius:99px;font-size:13px}
+.chip.on{background:var(--warn);color:#fff;border-color:var(--warn)}
+.chip.sel{background:var(--pri);color:#fff;border-color:var(--pri)}
+.truck{margin-bottom:8px}
+.truck .h{display:flex;justify-content:space-between;font-weight:600}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;text-align:center}
+.kv div{background:var(--bg);border-radius:8px;padding:6px}
+.kv b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+.log{display:flex;gap:8px;padding:9px 4px;border-bottom:1px solid var(--bd);align-items:center}
+.log:last-child{border:0}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.bar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;margin-top:3px}
+.bar i{display:block;height:100%}
+pre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border-radius:10px;padding:10px;font-size:12px;max-height:280px;overflow:auto;margin:8px 0 0}
+dialog{border:0;border-radius:16px;padding:16px;width:min(92vw,420px);background:var(--card);color:var(--tx)}
+dialog::backdrop{background:#0008}
+input,select{font:inherit;padding:9px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);width:100%}
+label{display:block;margin-top:10px;font-size:13px;color:var(--mu)}
+.banner{background:#f59e0b;color:#000;border-radius:10px;padding:8px;text-align:center;margin-top:8px;font-size:13px}
+</style>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+<main id="app"></main>
+<dialog id="dlg"></dialog>
+<div id="toast" style="position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:pre-line;text-align:center;z-index:99;font-size:14px"></div>
+<script>
+const KEY='kholog.v1';
+const ACTS=[
+ {id:'recv',zh:'收货',vi:'Nhận hàng',c:'#2563eb',hide:1},
+ {id:'coil',zh:'卸盘圆',vi:'Dỡ thép cuộn',c:'#7c3aed',hide:1},
+ {id:'strap',zh:'卸铁带',vi:'Dỡ đai thép',c:'#0891b2',hide:1},
+ {id:'tag',zh:'挂标识卡',vi:'Ghi thẻ nhận dạng (hậu nhận hàng)',c:'#2563eb'},
+ {id:'issue',zh:'发料',vi:'Cấp phát',c:'#16a34a'},
+ {id:'count',zh:'盘点',vi:'Kiểm kê',c:'#ca8a04'},
+ {id:'sys',zh:'录入系统',vi:'Nhập hệ thống',c:'#64748b',hide:1},
+ {id:'doc',zh:'入库单据/录入',vi:'Phiếu nhập kho · nhập hệ thống',c:'#0d9488'},
+ {id:'rpt',zh:'做报告',vi:'Làm báo cáo',c:'#4f46e5'},
+ {id:'tidy',zh:'整理货位',vi:'Sắp xếp kho',c:'#65a30d'},
+ {id:'clean',zh:'5S清洁',vi:'Dọn dẹp vệ sinh',c:'#0ea5e9'},
+ {id:'talk',zh:'沟通联系',vi:'Liên hệ/điện thoại',c:'#a855f7'},
+ {id:'meet',zh:'开会',vi:'Họp',c:'#f43f5e'},
+ {id:'walk',zh:'厂区步行',vi:'Đi bộ chuyển xưởng',c:'#d97706',hide:1},
+ {id:'wfork',zh:'等叉车',vi:'Chờ xe nâng',c:'#dc2626',w:1,hide:1},
+ {id:'wslot',zh:'等货位',vi:'Chờ vị trí kho',c:'#ea580c',w:1,hide:1},
+ {id:'wman',zh:'等人手',vi:'Chờ nhân lực',c:'#e11d48',w:1,hide:1},
+ {id:'wsup',zh:'等供应商',vi:'Chờ NCC',c:'#be123c',w:1,hide:1},
+ {id:'scrap',zh:'称废料',vi:'Cân phế liệu',c:'#78716c'},
+ {id:'rest',zh:'休息',vi:'Nghỉ',c:'#94a3b8'},
+ {id:'other',zh:'其他',vi:'Khác',c:'#475569'}];
+const A=Object.fromEntries(ACTS.map(a=>[a.id,a]));
+const an=e=>e.act==='other'&&e.to?e.to:A[e.act].zh;
+const anv=e=>e.act==='other'&&e.to?'':A[e.act].vi;
+const akey=e=>e.act==='other'&&e.to?'o:'+e.to:e.act;
+function actList(st){const o=ACTS.filter(a=>st.by[a.id]);Object.keys(st.by).filter(k=>k.startsWith('o:')).forEach(k=>o.push({id:k,zh:k.slice(2),vi:'',c:A.other.c}));return o}
+const REASONS=[['货位满','Hết chỗ'],['缺人','Thiếu người'],['叉车忙','Xe nâng bận'],['四厂无码头','Xưởng 4 không bến'],['成品库出柜','Kho TP xuất cont'],['供应商集中到货','NCC giao dồn'],['过磅排队','Xếp hàng cân'],['其他','Khác']];
+// [id, 中文, Việt, cần cân 2 chiều (hàng tính theo kg)]
+const TYPES=[['coil','盘圆','Thép cuộn',1],['strap','铁带','Đai thép',1],['chem','化学品','Hóa chất',1],['powder','粉末','Bột sơn',1],['recv','其他','Khác',0]];
+const ACTMAP={coil:'coil',strap:'strap'};
+const PLACES=[['K1','K1'],['K2','K2'],['K3','K3'],['厂4','Xưởng 4'],['磅站','Trạm cân'],['办公室','Văn phòng']];
+const STD=45;
+const TC={coil:'#7c3aed',strap:'#0891b2',chem:'#db2777',powder:'#ca8a04',recv:'#475569'};
+const tyOf=t=>TYPES.find(x=>x[0]===t.type)||['','?','?',1];
+const isW=t=>!!tyOf(t)[3];
+const pl=p=>p[0]===p[1]?p[0]:p[0]+' '+p[1];
+// giai đoạn tiếp theo của xe: win→start→unload→wout→fin→done
+function stage(t){return t.done||t.end?'done':'out'}
+const STEPS={out:['⚖ 出磅 Cân ra · 收货完成 Xong','var(--ok)'],win:['⚖ 进厂过磅 Cân vào','var(--pri)'],start:['▶ 开始卸 Bắt đầu dỡ','var(--pri)'],unload:['✔ 卸完 Dỡ xong','var(--ok)'],wout:['⚖ 出厂过磅 Cân ra','var(--pri)'],fin:['🏁 完成 Hoàn tất','var(--ok)']};
+let S=load(), view=dk(Date.now());
+function norm(o){o.days=o.days||{};o.sups=o.sups||[];o.dels=o.dels||[];o.idx=o.idx||{};return o}
+function load(){try{return norm(JSON.parse(localStorage.getItem(KEY))||{})}catch(e){return norm({})}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function sig(r){const {u,pu,_s,...x}=r;return JSON.stringify(x)}
+// save(): phát hiện bản ghi mới/sửa/xoá → đánh dấu u (thời điểm sửa) + hàng đợi xoá → đồng bộ
+function save(){const now=Date.now(),seen={};
+ for(const k in S.days)for(const [f,t] of [['log','logs'],['trucks','trucks']])for(const r of S.days[k][f]||[]){seen[r.id]=1;S.idx[r.id]=t;const g=sig(r);if(r._s!==g){r._s=g;r.u=Math.max(now,(r.u||0)+1)}}
+ for(const id in S.idx)if(!seen[id]){if(!S.dels.some(d=>d.id===id))S.dels.push({id,t:S.idx[id]});delete S.idx[id]}
+ persist();schedule(500)}
+function dk(ms){const d=new Date(ms);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function day(k=view){return S.days[k]||(S.days[k]={log:[],trucks:[]})}
+const isToday=()=>view===dk(Date.now());
+const uid=()=>Math.random().toString(36).slice(2,9);
+const T=ms=>{const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const mins=(a,b)=>Math.max(0,Math.round((b-a)/60000));
+const D=m=>m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+"'";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toMs(k,hhmm){const [y,m,d]=k.split('-').map(Number),[h,mi]=hhmm.split(':').map(Number);return new Date(y,m-1,d,h,mi).getTime()}
+
+// ---- actions
+function closeActive(now=Date.now()){const l=day().log,a=l.find(e=>!e.end);if(a)a.end=now;return a}
+function setTo(id,p){const e=day().log.find(x=>x.id===id);if(e){e.to=e.to===p?'':p;save();render()}}
+function otherNames(){const c={};Object.values(S.days).forEach(d=>d.log.forEach(e=>{if(e.act==='other'&&e.to)c[e.to]=(c[e.to]||0)+1}));return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0])}
+function otherDlg(){const ns=otherNames();openDlg(`<form onsubmit="startOther(onm.value);return false"><b>其他 Việc khác — đặt tên</b><input id="onm" autocomplete="off" placeholder="Tên việc / 名称 → Enter" style="width:100%;margin-top:8px;padding:12px;font-size:16px">${ns.length?`<div class="chips">${ns.map(x=>`<button type="button" class="chip" onclick="startOther(this.textContent)">${esc(x)}</button>`).join('')}</div>`:''}<div class="row" style="margin-top:12px"><button type="button" class="sp" onclick="dlg.close()">取消</button><button class="sp pri">▶ 开始 Bắt đầu</button></div></form>`);setTimeout(()=>{const i=document.getElementById('onm');i&&i.focus()},50)}
+function startOther(n){n=(n||'').trim();if(!n)return;dlg.close();if(!isToday())return;const now=Date.now();closeActive(now);day().log.push({id:uid(),act:'other',start:now,end:null,to:n});save();render()}
+function startAct(id){if(!isToday())return;const now=Date.now(),a=day().log.find(e=>!e.end);if(a&&a.act===id&&id!=='walk')return;closeActive(now);day().log.push({id:uid(),act:id,start:now,end:null});save();render()}
+function stopAct(){closeActive();save();render()}
+function addTruck(type,at,endAt){const ts=day().trucks,id=uid(),now=at||Date.now(),n=ts.filter(x=>x.type===type).reduce((m,x)=>Math.max(m,x.n||x.no||0),0)+1;
+ ts.push({id,no:ts.reduce((m,t)=>Math.max(m,t.no||0),0)+1,n,sup:'',type,m:1,arrive:now,win:now,start:now,end:endAt||null,wout:endAt||null,done:endAt||null,reasons:[]});
+ if(!at&&isToday()){const a=day().log.find(e=>!e.end);if(!a||a.act!=='recv'){closeActive(now);day().log.push({id:uid(),act:'recv',start:now,end:null})}}
+ save();render();if(!at){const ty=tyOf({type});toast('▶ '+ty[1]+' '+n+' · 开始 '+T(now)+'\n'+ty[2]+' '+n+' bắt đầu')}return id}
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.style.opacity=1;try{navigator.vibrate&&navigator.vibrate(60)}catch(x){}clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.opacity=0,2200)}
+function tname(t){return tyOf(t)[1]+' '+(t.n||t.no||'')}
+const EXP={};
+function setType(id,ty){const t=truck(id);t.type=t.type===ty?null:ty;save();render()}
+function setSup(id,v){const t=truck(id);t.sup=v.trim();if(t.sup&&!S.sups.includes(t.sup))S.sups.unshift(t.sup);S.sups=S.sups.slice(0,30);save()}
+function truck(id){return day().trucks.find(t=>t.id===id)}
+function tStep(id){const t=truck(id),now=Date.now();if(stage(t)==='done')return;
+ t.end=t.wout=t.done=now;
+ if(isToday()&&!day().trucks.some(x=>x.id!==id&&stage(x)!=='done')){const a=day().log.find(e=>!e.end);if(a&&a.act==='recv')a.end=now}
+ save();render();const a=t.win||t.start||t.arrive;toast('✔ '+tname(t)+' '+T(a)+'–'+T(now)+' ('+D(mins(a,now))+')')}
+function tReason(id,r){const t=truck(id),i=t.reasons.indexOf(r);i<0?t.reasons.push(r):t.reasons.splice(i,1);save();render()}
+function tDel(id){if(!confirm('删除这辆车? Xoá xe này?'))return;day().trucks=day().trucks.filter(t=>t.id!==id);save();render()}
+function shift(n){const [y,m,d]=view.split('-').map(Number);view=dk(new Date(y,m-1,d+n).getTime());render()}
+
+// ---- dialogs
+const dlg=document.getElementById('dlg');
+function openDlg(h){dlg.style.width='';dlg.innerHTML=h;dlg.showModal()}
+// ---- 老板看板 (Gantt: mỗi xe 1 thanh, chồng nhau = làm cùng lúc)
+let BCV=null;
+function boardDraw(k){
+ const d=day(k),st=stats(k),now=Date.now(),td=k===dk(now),W=560,L=70,R=22,CW=W-L-R,F='system-ui,"Microsoft YaHei","PingFang SC",sans-serif',RED='#dc2626';
+ const rows=st.trucks.map(t=>{const a=t.win||t.start||t.arrive,fin=t.done||t.end;return {t,a,e:fin||(td?now:a),open:!fin}}).sort((x,y)=>x.a-y.a);
+ const logs=d.log.map(e=>({e,a:e.start,b:e.end||(td?now:e.start)}));
+ const all=rows.flatMap(r=>[r.a,r.e]).concat(logs.flatMap(l=>[l.a,l.b]));
+ const c=document.createElement('canvas'),g=c.getContext('2d');
+ if(!all.length){c.width=W;c.height=80;g.fillStyle='#fff';g.fillRect(0,0,W,80);g.fillStyle='#6b7280';g.font='14px '+F;g.fillText('今天还没有记录 Chưa có dữ liệu',16,44);return c}
+ const lo=new Date(new Date(Math.min(...all)).setMinutes(0,0,0)).getTime();let hi=new Date(new Date(Math.max(...all)).setMinutes(0,0,0)).getTime()+36e5;if(hi-lo<2*36e5)hi=lo+2*36e5;
+ const x=ms=>L+(ms-lo)/(hi-lo)*CW;
+ const ev=[];rows.forEach(r=>{ev.push([r.a,1],[r.e,-1])});ev.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);
+ const segs=[];let cur=0,maxc=0;for(let i=0;i<ev.length;i++){const p=cur;cur+=ev[i][1];maxc=Math.max(maxc,cur);if(i+1<ev.length&&ev[i+1][0]>ev[i][0]&&cur>=2)segs.push([ev[i][0],ev[i+1][0],cur])}
+ const mm=r=>mins(r.a,r.e),over=r=>r.t.type==='coil'&&mm(r)>STD,nOver=rows.filter(over).length;
+ const rc={};rows.forEach(r=>r.t.reasons.forEach(x=>rc[x]=(rc[x]||0)+1));
+ const top=Object.entries(rc).sort((p,q)=>q[1]-p[1]).slice(0,4).map(p=>p[0]+'×'+p[1]).join('  ');
+ g.font='11px '+F;
+ const used=ACTS.filter(a=>logs.some(l=>l.e.act===a.id)),leg=[];let lx=0,ly=0;
+ used.forEach(a=>{const w=g.measureText(a.zh).width+20;if(lx+w>W-24){lx=0;ly++}leg.push([a,lx,ly]);lx+=w});
+ const legH=used.length?(ly+1)*16+4:0;
+ const rh=r=>r.t.reasons.length?52:40;
+ const top0=118,y1=top0+8,yMe=y1+30,yT=yMe+34+legH+6;
+ const al=actList(st).filter(a=>st.by[a.id]>0).sort((p,q)=>st.by[q.id]-st.by[p.id]),tblH=al.length&&st.tot?al.length*22+40:0;
+ const H=yT+rows.reduce((s,r)=>s+rh(r),0)+tblH+30;
+ const S=2;c.width=W*S;c.height=H*S;g.scale(S,S);
+ g.fillStyle='#fff';g.fillRect(0,0,W,H);
+ g.fillStyle='#111827';g.font='bold 17px '+F;g.fillText(k+'  资材课 工作看板',12,26);
+ g.font='13px '+F;
+ g.fillText(rows.length+' 车 Xe · 最多同时 '+maxc+' 车 (cùng lúc)',12,48);
+ g.fillStyle=nOver?RED:'#111827';g.fillText(nOver?'盘圆超标 '+nOver+' 车 · vượt chuẩn '+STD+"'":'盘圆无超标 · không xe nào vượt '+STD+"'",12,68);
+ g.fillStyle='#111827';g.fillText((top?'原因 Nguyên nhân: '+top:'原因: -'),12,88);
+ const sum=rows.reduce((s,r)=>s+mm(r),0);let un=0,ce=0;rows.slice().sort((p,q)=>p.a-q.a).forEach(r=>{const a=Math.max(r.a,ce);if(r.e>a){un+=r.e-a;ce=r.e}});un=Math.round(un/6e4);
+ g.fillStyle='#6b7280';g.fillText('各车合计 Cộng dồn '+D(sum)+' / 实际 Thực '+D(un)+' → 同时处理 Song song '+D(Math.max(0,sum-un)),12,108);
+ const yEnd=yT+rows.reduce((s,r)=>s+rh(r),0);
+ g.strokeStyle='#e5e7eb';g.lineWidth=1;g.fillStyle='#6b7280';g.font='11px '+F;g.textAlign='center';
+ for(let t=lo;t<=hi;t+=36e5){const xx=Math.round(x(t))+.5;g.beginPath();g.moveTo(xx,top0+14);g.lineTo(xx,yEnd);g.stroke();g.fillText(T(t),xx,top0+10)}
+ g.textAlign='left';
+ g.fillStyle='#111827';g.font='bold 12px '+F;g.fillText('同时 Cùng lúc',4,y1+17);
+ segs.forEach(s=>{const a=x(s[0]),w=Math.max(2,x(s[1])-a);g.fillStyle=['','','#fbbf24','#f97316','#dc2626'][Math.min(4,s[2])];g.fillRect(a,y1+4,w,18);if(w>14){g.fillStyle='#fff';g.font='bold 11px '+F;g.fillText(s[2],a+4,y1+17)}});
+ g.fillStyle='#111827';g.font='bold 12px '+F;g.fillText('我 Tôi',4,yMe+17);
+ logs.forEach(l=>{const a=x(l.a),w=Math.max(1.5,x(l.b)-a);g.fillStyle=A[l.e.act].c;g.fillRect(a,yMe+4,w,18)});
+ g.font='11px '+F;leg.forEach(p=>{const xx=12+p[1],yy=yMe+40+p[2]*16;g.fillStyle=p[0].c;g.fillRect(xx,yy-9,10,10);g.fillStyle='#374151';g.fillText(p[0].zh,xx+14,yy)});
+ let y=yT;
+ rows.forEach(r=>{const t=r.t,m=mm(r),ov=over(r),col=TC[t.type]||TC.recv,a=x(r.a),w=Math.max(3,x(r.e)-a);
+  g.fillStyle='#111827';g.font='bold 12px '+F;g.fillText(tname(t),4,y+17);
+  const sw=t.type==='coil'?Math.min(w,(STD/ ((hi-lo)/60000))*CW):w;
+  g.fillStyle=col;g.fillRect(a,y+4,sw,18);if(ov){g.fillStyle=RED;g.fillRect(a+sw,y+4,w-sw,18)}
+  if(r.open){g.strokeStyle='#111827';g.setLineDash([3,2]);g.strokeRect(a+.5,y+4.5,w-1,17);g.setLineDash([])}
+  g.font='11px '+F;g.fillStyle=ov?RED:'#374151';
+  g.fillText(T(r.a)+'–'+(r.open?'…':T(r.e))+' · '+D(m)+(ov?' · 超 +'+(m-STD)+"'":''),a>L+CW*.55?Math.max(L,a-0):a,y+36);
+  if(t.reasons.length){g.fillStyle='#6b7280';let s='原因: '+t.reasons.join('、');while(g.measureText(s).width>W-L-8&&s.length>6)s=s.slice(0,-2);g.fillText(s,L,y+49)}
+  y+=rh(r)});
+ if(tblH){let ty=yEnd+26;g.fillStyle='#111827';g.font='bold 13px '+F;g.fillText('工作分布 Phân bổ thời gian · 合计 '+D(st.tot),12,ty);ty+=8;
+  g.strokeStyle='#e5e7eb';g.beginPath();g.moveTo(12,ty+.5);g.lineTo(W-12,ty+.5);g.stroke();
+  al.forEach((a,i)=>{const yy=ty+18+i*22,m=st.by[a.id],pc=Math.round(m*100/st.tot);g.font='12px '+F;g.fillStyle='#111827';g.fillText(a.zh,12,yy);
+   const bx=170,bw=W-bx-120;g.fillStyle='#f1f5f9';g.fillRect(bx,yy-10,bw,11);g.fillStyle=a.c;g.fillRect(bx,yy-10,Math.max(2,bw*m/st.tot),11);
+   g.textAlign='right';g.fillStyle='#374151';g.fillText(D(m),W-62,yy);g.fillText(pc+'%',W-14,yy);g.textAlign='left'})}
+ g.fillStyle='#6b7280';g.font='11px '+F;g.fillText('红=超'+STD+"分标准 đỏ=vượt chuẩn · chồng=cùng lúc · trống=đi bộ/cân",8,H-10);
+ return c}
+function boardDlg(){
+ BCV=boardDraw(view);openDlg('<div id="bwrap" style="overflow:auto"></div><div class="row" style="margin-top:12px"><button class="sp" onclick="dlg.close()">关闭 Đóng</button><button class="sp pri" onclick="boardSave()">📤 保存/发送图片 Lưu/gửi ảnh</button></div>');
+ dlg.style.width='min(96vw,620px)';BCV.style.width='100%';BCV.style.height='auto';document.getElementById('bwrap').appendChild(BCV)}
+function boardSave(){if(!BCV)return;BCV.toBlob(b=>{const f=new File([b],'kho-'+view+'.png',{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(()=>{})}else dl(f.name,b)},'image/png')}
+function backDlg(){const n=T(Date.now());
+ openDlg(`<b>补录 Thêm bù (việc đã làm)</b>
+ <label>工作 Việc</label><select id="ba">${ACTS.filter(a=>!a.hide).map(a=>`<option value="${a.id}">${a.zh} ${a.vi}</option>`).join('')}</select>
+ <label>开始 Từ</label><input id="bs" type="time" value="08:00">
+ <label>结束 Đến</label><input id="be" type="time" value="${n}">
+ <label>名称 Tên (nếu chọn Khác)</label><input id="bn" autocomplete="off">
+ <label>去向 Đến (nếu đi bộ)</label><select id="bt"><option value="">-</option>${PLACES.map(p=>`<option value="${p[0]}">${pl(p)}</option>`).join('')}</select>
+ <div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="saveBack(false)">保存 + 再加 Lưu & thêm</button><button class="sp pri" onclick="saveBack(true)">保存 Lưu</button></div>`)}
+function saveBack(close){const s=toMs(view,bs.value),e=toMs(view,be.value);if(!(e>s)){alert('结束要晚于开始 / Giờ kết thúc phải sau giờ bắt đầu');return}day().log.push({id:uid(),act:ba.value,start:s,end:e,to:ba.value==='walk'?bt.value:(ba.value==='other'?bn.value.trim():'')});day().log.sort((a,b)=>a.start-b.start);save();render();if(close)dlg.close();else{bs.value=be.value;be.value=''}}
+function backTruckDlg(){openDlg(`<b>补录车辆 Thêm xe bù</b><label>进磅时间 Giờ cân vào</label><input id="bk" type="time" value="08:00"><div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="{const id=addTruck(toMs(view,bk.value));dlg.close();tEditDlg(id)}">下一步 Tiếp: nhập các mốc</button></div>`)}
+function editDlg(id){
+ const e=day().log.find(x=>x.id===id);
+ openDlg(`<b>编辑 Sửa</b>
+ <label>工作 Việc</label><select id="ea">${ACTS.map(a=>`<option value="${a.id}" ${a.id===e.act?'selected':''}>${a.zh} ${a.vi}</option>`).join('')}</select>
+ <label>开始 Bắt đầu</label><input id="es" type="time" value="${T(e.start)}">
+ <label>结束 Kết thúc ${e.end?'':'(đang chạy)'}</label><input id="ee" type="time" value="${e.end?T(e.end):''}">
+ ${e.act==='other'?`<label>名称 Tên việc</label><input id="eon" autocomplete="off" value="${esc(e.to||'')}">`:''}
+ ${e.act==='walk'?`<label>去向 Đến</label><select id="eto"><option value="">-</option>${PLACES.map(p=>`<option value="${p[0]}" ${e.to===p[0]?'selected':''}>${pl(p)}</option>`).join('')}</select>`:''}
+ <div class="row" style="margin-top:14px"><button class="bad" onclick="delLog('${id}')">删除 Xoá</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="saveLog('${id}')">保存 Lưu</button></div>`)}
+function saveLog(id){const e=day().log.find(x=>x.id===id);e.act=ea.value;if(window.eto)e.to=eto.value;if(window.eon)e.to=eon.value.trim();if(es.value)e.start=toMs(view,es.value);e.end=ee.value?toMs(view,ee.value):(e.end?e.end:null);if(e.end&&e.end<e.start)e.end=e.start;day().log.sort((a,b)=>a.start-b.start);save();dlg.close();render()}
+function delLog(id){day().log=day().log.filter(x=>x.id!==id);save();dlg.close();render()}
+function tEditDlg(id){const t=truck(id);
+ openDlg(`<b>修改 Sửa ${tname(t)}</b><label>货物 Loại hàng</label><select id="t0">${TYPES.map(x=>`<option value="${x[0]}" ${t.type===x[0]?'selected':''}>${x[1]} ${x[2]}</option>`).join('')}</select>
+ <label>开始 Bắt đầu nhận</label><input id="t1" type="time" value="${T(t.win||t.start||t.arrive)}">
+ <label>完成 Xong</label><input id="t5" type="time" value="${t.done||t.end?T(t.done||t.end):''}">
+ <div class="row" style="margin-top:14px"><button class="bad" onclick="dlg.close();tDel('${id}')">删除</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="tSave('${id}')">保存 Lưu</button></div>`)}
+function tSave(id){const t=truck(id),g=i=>{const x=document.getElementById(i);return x&&x.value?toMs(view,x.value):null};
+ t.type=t0.value;t.arrive=t.win=t.start=g('t1')||t.arrive;t.end=t.wout=t.done=g('t5');t.m=1;save();dlg.close();render()}
+function backTruckDlg(){openDlg(`<b>补录车辆 Thêm xe bù</b><label>货物 Loại hàng</label><select id="bk0">${TYPES.map(x=>`<option value="${x[0]}">${x[1]} ${x[2]}</option>`).join('')}</select>
+ <label>开始 Từ</label><input id="bk1" type="time" value="08:00"><label>完成 Đến</label><input id="bk2" type="time" value="${T(Date.now())}">
+ <div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="saveBackTruck(false)">保存 + 再加</button><button class="sp pri" onclick="saveBackTruck(true)">保存 Lưu</button></div>`)}
+function saveBackTruck(close){const s=toMs(view,bk1.value),e=toMs(view,bk2.value);if(!(e>s)){alert('完成要晚于开始 / Giờ xong phải sau giờ bắt đầu');return}addTruck(bk0.value,s,e);if(close)dlg.close();else{bk1.value=bk2.value;bk2.value=''}}
+// ---- stats
+function stats(k){
+ const d=day(k),now=Date.now(),by={};let tot=0;
+ d.log.forEach(e=>{const m=mins(e.start,e.end||now);const kk=akey(e);by[kk]=(by[kk]||0)+m;tot+=m});
+ const wait=ACTS.filter(a=>a.w).reduce((s,a)=>s+(by[a.id]||0),0);
+ const walks=d.log.filter(e=>e.act==='walk'),wd={};walks.forEach(e=>{if(e.to)wd[e.to]=(wd[e.to]||0)+1});
+ const walk={n:walks.length,m:by.walk||0,dest:wd};
+ return {by,tot,wait,walk,trucks:d.trucks.map(t=>{const w=isW(t),first=w?(t.win||t.start):t.start,fin=t.done||(!w&&t.end)||now;
+  return {...t,w:mins(t.arrive,first||now),dock:w&&t.win?mins(t.win,t.start||now):0,u:t.start?mins(t.start,t.end||now):0,out:w&&t.end?mins(t.end,t.wout||t.done||now):0,tot:mins(t.arrive,fin)}})}
+}
+function trLine(t){const a=t.win||t.start||t.arrive,e=t.done||t.end,u=mins(a,e||Date.now());return `${tname(t)} ${T(a)}-${e?T(e):'进行中'} (${D(u)})${t.type==='coil'&&u>STD?' 超'+(u-STD)+"'":''}${t.reasons.length?' | 原因: '+t.reasons.join('、'):''}`}
+
+// ---- render
+function render(){
+ const d=day(),st=stats(view),act=d.log.find(e=>!e.end),td=isToday();
+ let h=`<div class="row" style="padding-top:max(12px,env(safe-area-inset-top))"><button onclick="shift(-1)">◀</button><div class="sp" style="text-align:center"><b>${view}</b><br><small>资材课 · Nhật ký kho${td?'':' · <span class=bad>xem ngày cũ</span>'}</small><br><small id="st" class="mu"></small></div><button onclick="shift(1)">▶</button></div>`;
+ if(!td)h+=`<div class="banner">Đang xem ngày cũ — chỉ sửa/xuất được. <a href="#" onclick="view=dk(Date.now());render();return false">Về hôm nay 回到今天</a></div>`;
+ h+=`<div class="card now" style="margin-top:10px">${act?`<div class="mu">进行中 Đang làm</div><div class="n" style="color:${A[act.act].c}">${an(act)} ${anv(act)}</div><div class="t" id="tick" data-s="${act.start}">00:00:00</div><small>从 ${T(act.start)} 开始</small>${act.act==='walk'?`<div class="chips" style="justify-content:center"><small class="mu">去 Đến:</small>${PLACES.map(p=>`<button class="chip ${act.to===p[0]?'sel':''}" onclick="setTo('${act.id}','${p[0]}')">${pl(p)}</button>`).join('')}</div>`:''}`:`<div class="mu">未开始 Chưa bắt đầu</div><div class="t">--:--</div><small>点下面按钮开始 Bấm nút bên dưới</small>`}</div>`;
+ h+=`<h2>工作 Công việc (1 chạm)</h2><div class="grid">${ACTS.filter(a=>!a.hide).map(a=>`<button class="act ${act&&act.act===a.id?'on':''}" style="--c:${a.c}" ${td?'':'disabled'} onclick="${a.id==='other'?'otherDlg()':`startAct('${a.id}')`}"><b>${a.id==='walk'?'🚶 ':''}${a.zh}</b><small>${a.vi}</small></button>`).join('')}</div>`;
+ const nOpen=st.trucks.filter(t=>stage(t)!=='done').length;
+ if(td&&act&&(act.act==='walk'||A[act.act].w)&&nOpen)h+=`<button class="pri" style="width:100%;margin-top:8px;padding:14px;font-size:17px" onclick="startAct('recv')">↩ 回收货 Về nhận hàng (còn ${nOpen} xe)</button>`;
+ if(td&&act)h+=`<button style="width:100%;margin-top:8px" onclick="stopAct()">⏹ 停止/下班 Dừng</button>`;
+ h+=`<h2>收货 Nhận hàng · chạm đúng loại hàng</h2>`;
+ if(td)h+=`<div class="grid">${TYPES.map(x=>`<button class="act" style="--c:${TC[x[0]]}" onclick="addTruck('${x[0]}')"><b>${x[1]}</b><small>${x[2]} · +1 xe</small></button>`).join('')}</div>`;
+ h+=`<button style="width:100%;margin:8px 0" onclick="backTruckDlg()">＋ 补录车辆 Thêm xe bù</button>`;
+ const act0=st.trucks.filter(t=>stage(t)!=='done'),done0=st.trucks.filter(t=>stage(t)==='done');
+ const truckCard=t=>{const s=stage(t),ty=tyOf(t),nm=tname(t),a=t.win||t.start||t.arrive,en=t.done||t.end,u=mins(a,en||Date.now()),over=t.type==='coil'&&u>STD;
+  if(s==='done'&&!EXP[t.id])return `<div class="card truck row" onclick="EXP['${t.id}']=1;render()" style="padding:8px 12px;opacity:.85"><span class="sp">✔ <b>${nm}</b> <small>${ty[2]}</small></span><small>${T(a)}–${T(en)} · ${D(u)}${over?' · <span class=bad>+'+(u-STD)+"'</span>":''}</small></div>`;
+  const showR=over||t.reasons.length||s==='done';
+  return `<div class="card truck" style="${over?'border-color:var(--warn)':''}"><div class="h"><span onclick="tEditDlg('${t.id}')">${nm} <small>${ty[2]}</small> ✎</span><small>${s==='done'?'<a href="#" onclick="delete EXP[\''+t.id+'\'];render();return false">▲</a>':'开始 '+T(a)}</small></div>
+  <div class="kv" style="grid-template-columns:1fr"><div><small>${s==='done'?T(a)+'–'+T(en):'进行中 Đang nhận'}</small><b class="${over?'bad ':''}${en?'':'tu'}" ${en?'':'data-s="'+a+'"'}>${D(u)}</b></div></div>
+  ${over?`<div class="bad" style="font-weight:700;margin-top:6px">⚠ 超标准 vượt chuẩn ${STD}' → +${u-STD}'</div>`:''}
+  ${td&&s!=='done'?`<button class="pri" style="width:100%;margin-top:8px;padding:14px;font-size:18px;background:var(--ok);border-color:var(--ok)" onclick="tStep('${t.id}')">✔ 完成 Xong</button>`:''}
+  ${showR?`<div class="chips">${REASONS.map(r=>`<button class="chip ${t.reasons.includes(r[0])?'on':''}" onclick="tReason('${t.id}','${r[0]}')">${r[0]} <small style="color:inherit;opacity:.7">${r[1]}</small></button>`).join('')}</div>`:''}</div>`};
+ act0.concat(done0).forEach(t=>{h+=truckCard(t)});
+ if(!st.trucks.length)h+=`<small>Chưa có xe nào hôm nay.</small>`;
+ h+=`<h2>时间明细 Chi tiết (chạm để sửa)</h2><button style="width:100%;margin-bottom:8px" onclick="backDlg()">＋ 补录工作 Thêm việc bù</button><div class="card">${d.log.length?d.log.slice().reverse().map(e=>{const a=A[e.act];return `<div class="log" onclick="editDlg('${e.id}')"><span class="dot" style="background:${a.c}"></span><b>${T(e.start)}–${e.end?T(e.end):'…'}</b><span class="sp">${esc(an(e))}${e.act==='walk'&&e.to?' → '+esc(e.to):''} <small>${anv(e)}</small></span><b>${D(mins(e.start,e.end||Date.now()))}</b></div>`}).join(''):'<small>Trống</small>'}</div>`;
+ h+=`<button class="pri" style="width:100%;margin-top:14px;padding:14px;font-size:17px" onclick="boardDlg()">📊 老板看板 Bảng cho sếp (Gantt)</button>`;
+ h+=`<h2>汇总 Tổng hợp</h2><div class="card"><div class="row"><b>已记录 Tổng</b><span class="sp"></span><b>${D(st.tot)}</b></div><div class="row"><span>净工作 Làm việc thực</span><span class="sp"></span><b>${D(Math.max(0,st.tot-st.wait-st.walk.m-(st.by.rest||0)))}</b></div><div class="row"><span class="bad">等待 Chờ/gián đoạn</span><span class="sp"></span><b class="bad">${D(st.wait)} (${st.tot?Math.round(st.wait*100/st.tot):0}%)</b></div>
+ ${st.walk.n?`<div class="row" style="color:#d97706"><span>🚶 步行 Đi bộ</span><span class="sp"></span><b>${st.walk.n} 趟/lượt · ${D(st.walk.m)} · TB ${Math.round(st.walk.m/st.walk.n)}'/lượt</b></div>`:''}
+ ${actList(st).map(a=>`<div style="margin-top:8px"><div class="row"><span>${a.zh} <small>${a.vi}</small></span><span class="sp"></span><span>${D(st.by[a.id])} · ${Math.round(st.by[a.id]*100/st.tot)}%</span></div><div class="bar"><i style="width:${st.by[a.id]*100/st.tot}%;background:${a.c}"></i></div></div>`).join('')}</div>`;
+ h+=`<div class="row" style="margin-top:10px"><button class="sp" onclick="copyRep()">📋 复制报告 Copy</button><button class="sp" onclick="xlsx()">📊 Excel</button></div><pre id="rep">${esc(report())}</pre>
+ <div class="row" style="margin-top:14px"><button class="sp" onclick="exportJson()">备份 Backup</button><button class="sp" onclick="importDlg()">还原 Restore</button></div>`;
+ document.getElementById('app').innerHTML=h;tick();setSt();
+}
+function tick(){const now=Date.now(),t=document.getElementById('tick');if(t){let s=Math.max(0,Math.floor((now-t.dataset.s)/1000));t.textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,'0')).join(':')}
+ document.querySelectorAll('.tu').forEach(u=>u.textContent=D(mins(+u.dataset.s,now)))}
+setInterval(tick,1000);setInterval(()=>{if(isToday())softRender()},60000);
+
+// ---- report
+function report(k=view){
+ const d=day(k),st=stats(k),now=Date.now(),L=[];
+ L.push(`${k} 资材课 工作记录`,'','【时间段】');
+ d.log.forEach(e=>L.push(`${T(e.start)}-${e.end?T(e.end):'进行中'} ${an(e)}${e.act!=='other'&&e.to?'→'+e.to:''} ${D(mins(e.start,e.end||now))}`));
+ L.push('','【汇总】',`合计 ${D(st.tot)}：净工作 ${D(Math.max(0,st.tot-st.wait-st.walk.m-(st.by.rest||0)))}，等待/中断 ${D(st.wait)} (${st.tot?Math.round(st.wait*100/st.tot):0}%)，厂区步行 ${D(st.walk.m)} (${st.tot?Math.round(st.walk.m*100/st.tot):0}%)${st.by.rest?'，休息 '+D(st.by.rest):''}`);
+ actList(st).forEach(a=>L.push(`${a.zh}: ${D(st.by[a.id])} (${Math.round(st.by[a.id]*100/st.tot)}%)`));
+ if(st.walk.n)L.push(`厂区步行: 共${st.walk.n}趟，合计${D(st.walk.m)}，平均${Math.round(st.walk.m/st.walk.n)}分/趟`+(Object.keys(st.walk.dest).length?'，去向: '+Object.entries(st.walk.dest).map(([k,v])=>k+'×'+v).join(' '):''));
+ if(st.trucks.length){L.push('','【收货记录】(盘圆标准 '+STD+' 分钟)');
+  st.trucks.forEach(t=>L.push(trLine(t)));
+  const wt=st.trucks.filter(t=>isW(t)&&!t.m);if(wt.length)L.push(`过磅车辆${wt.length}辆: 平均等进磅${Math.round(wt.reduce((s,t)=>s+t.w,0)/wt.length)}分，平均等出磅${Math.round(wt.reduce((s,t)=>s+t.out,0)/wt.length)}分`)}
+ return L.join('\n')}
+function copyRep(){const t=report();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>alert('已复制 Đã copy')).catch(()=>{const r=document.createRange();r.selectNodeContents(document.getElementById('rep'));getSelection().removeAllRanges();getSelection().addRange(r);alert('Hãy giữ chọn & copy thủ công')})}
+function dl(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+let xlsxTry=0;
+function xlsx(){
+ if(typeof XLSX==='undefined'&&!xlsxTry){xlsxTry=1;toast('Đang tải Excel…');const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=xlsx;s.onerror=xlsx;document.head.appendChild(s);return}
+ const now=Date.now(),hm=x=>x?T(x):'',logs=[['日期','开始','结束','分钟','工作','Việc','去向']],walks=[['日期','开始','结束','分钟','去向']],trs=[['日期','供应商','货物','按kg过磅','到厂','进厂过磅','开始卸','卸完','出厂过磅','完成','等进磅(分)','入场(分)','卸货(分)','等出磅(分)','合计(分)','标准(分)','原因']],sum=[['日期','工作','Việc','分钟','等待?']];
+ Object.keys(S.days).sort().forEach(k=>{const d=S.days[k],st=stats(k);
+  d.log.forEach(e=>{const m=mins(e.start,e.end||now);logs.push([k,T(e.start),e.end?T(e.end):'',m,an(e),anv(e),e.act==='other'?'':(e.to||'')]);if(e.act==='walk')walks.push([k,T(e.start),e.end?T(e.end):'',m,e.to||''])});
+  st.trucks.forEach(t=>trs.push([k,tname(t)+(t.sup&&t.sup!=="?"?" "+t.sup:""),tyOf(t)[1],isW(t)?'是':'',T(t.arrive),hm(t.win),hm(t.start),hm(t.end),hm(t.wout),hm(t.done),t.w,isW(t)?t.dock:'',t.u,isW(t)?t.out:'',t.tot,t.type==='coil'?STD:'',t.reasons.join('、')]));
+  actList(st).forEach(a=>sum.push([k,a.zh,a.vi,st.by[a.id],a.w?'是':'']))});
+ if(typeof XLSX==='undefined'){const csv=logs.map(r=>r.join(',')).join('\n');return dl('kho-log.csv',new Blob(['﻿'+csv],{type:'text/csv'}))}
+ const wb=XLSX.utils.book_new();[['明细 Log',logs],['卸货过磅 Xe',trs],['步行 Di bo',walks],['汇总 Tong',sum]].forEach(([n,a])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a),n));
+ XLSX.writeFile(wb,'kho-log-'+view+'.xlsx')}
+function exportJson(){dl('kho-log-backup-'+view+'.json',new Blob([JSON.stringify(S)],{type:'application/json'}))}
+function importDlg(){openDlg(`<b>还原 Restore</b><label>Chọn file backup .json</label><input type="file" accept=".json" onchange="doImport(this.files[0])"><div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button></div>`)}
+function doImport(f){if(!f)return;f.text().then(t=>{const o=JSON.parse(t);if(!o.days)throw 0;if(!confirm('Ghi đè dữ liệu hiện tại?'))return;S=norm(o);save();dlg.close();render()}).catch(()=>alert('File không hợp lệ'))}
+// ---- đồng bộ Google Sheet (chỉ hoạt động khi chạy trong Apps Script web app; mở file thường = chỉ lưu máy)
+const API=(()=>{try{const m=location.hash.match(/u=([^&]+)/);if(m){localStorage.setItem('kholog.api',decodeURIComponent(m[1]));history.replaceState(null,'',location.pathname+location.search)}return localStorage.getItem('kholog.api')||''}catch(e){return ''}})();
+const IN_GAS=typeof google!=='undefined'&&google.script&&google.script.run;
+const GS=!!(IN_GAS||API);
+function rpc(p){
+ if(IN_GAS)return new Promise((ok,no)=>google.script.run.withSuccessHandler(ok).withFailureHandler(no).sync(p));
+ return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).then(r=>r.json()).then(j=>{if(j&&j.error)throw new Error(j.error);return j})}
+function setApi(){const u=prompt('Dán link Web App (…/exec) của Apps Script:',API||'');if(u&&/^https:\/\/script\.google\.com\//.test(u.trim())){localStorage.setItem('kholog.api',u.trim());location.reload()}}
+const KIND=[['log','logs'],['trucks','trucks']];
+let busy=false,again=false,tm0,lastOk=0,errN=0,errMsg='';
+const hm=x=>x?T(x):'';
+const tm=(k,v)=>{const m=String(v==null?'':v).match(/(\d{1,2}):(\d{2})/);return m?toMs(k,m[1].padStart(2,'0')+':'+m[2]):null};
+function toRow(f,k,r){
+ if(f==='log')return [r.id,k,hm(r.start),hm(r.end),(A[r.act]||A.other).zh,r.to||'',r.truck||'',r.u];
+ return [r.id,k,String(r.n||r.no||''),r.sup&&r.sup!=='?'?r.sup:'',(TYPES.find(x=>x[0]===r.type)||['',''])[1],hm(r.arrive),hm(r.win),hm(r.start),hm(r.end),hm(r.wout),hm(r.done),(r.reasons||[]).join('、'),r.u]}
+function fromRow(f,row,k){
+ const id=String(row[0]),u=+row[f==='log'?7:12]||0;
+ if(f==='log'){const s=tm(k,row[2]);if(!s)return null;return {id,act:(ACTS.find(a=>a.zh===String(row[4]).trim())||(String(row[4]).trim()==='入库单据'?A.doc:A.other)).id,start:s,end:tm(k,row[3]),to:String(row[5]||''),...(row[6]?{truck:String(row[6])}:{}),u}}
+ const ar=tm(k,row[5])||tm(k,row[7]);if(!ar)return null;
+ const wi=tm(k,row[6]),stt=tm(k,row[7]);return {id,no:+row[2]||0,n:+row[2]||0,m:(wi&&stt&&wi!==stt)?0:1,sup:String(row[3]||''),type:(TYPES.find(x=>x[1]===String(row[4]).trim())||[])[0]||null,arrive:ar,win:tm(k,row[6]),start:tm(k,row[7]),end:tm(k,row[8]),wout:tm(k,row[9]),done:tm(k,row[10]),reasons:row[11]?String(row[11]).split(/[、,，]/).map(s=>s.trim()).filter(Boolean):[],u}}
+function pending(){let n=S.dels.length;for(const k in S.days)for(const [f] of KIND)for(const r of S.days[k][f]||[])if(r.u>(r.pu||0))n++;return n}
+function setSt(){const e=document.getElementById('st');if(!e)return;
+ e.onclick=(!IN_GAS&&/^https?:/.test(location.protocol))?setApi:null;
+ e.textContent=!GS?(/^https?:/.test(location.protocol)?'⚙ Chạm để nhập link đồng bộ':'仅本机 · chỉ lưu máy'):errN?'⚠ 离线 Mất mạng — đã lưu máy ('+pending()+' chờ)':busy?'⟳ 同步中…':pending()?'● '+pending()+' 待同步':'✓ 已同步 '+(lastOk?T(lastOk):'')}
+function schedule(ms){if(!GS)return;clearTimeout(tm0);tm0=setTimeout(doSync,ms==null?500:ms)}
+function softRender(){const a=document.activeElement;if(!dlg.open&&!(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)))render()}
+function findRec(id){for(const k in S.days)for(const [f] of KIND){const i=(S.days[k][f]||[]).findIndex(x=>x.id===id);if(i>=0)return {k,f,i}}return null}
+function ack(sent){const m=new Map(sent.rows.map(x=>[x.id,x.u]));
+ for(const k in S.days)for(const [f] of KIND)for(const r of S.days[k][f]||[])if(m.has(r.id))r.pu=Math.max(r.pu||0,m.get(r.id));
+ S.dels=S.dels.filter(d=>!sent.dels.some(s=>s.id===d.id))}
+function merge(res){let ch=false;const sv={};
+ KIND.forEach(([f,t])=>(res[t]||[]).forEach(row=>{const id=String(row[0]);sv[id]=1;const k=String(row[1]||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||S.dels.some(d=>d.id===id))return;
+  const rec=fromRow(f,row,k);if(!rec)return;const at=findRec(id);
+  if(!at||(rec.u>(S.days[at.k][at.f][at.i].u||0))){
+   if(at)S.days[at.k][at.f].splice(at.i,1);
+   rec.pu=rec.u;rec._s=sig(rec);day(k)[f].push(rec);S.idx[id]=t;ch=true}}));
+ for(const k in S.days)for(const [f] of KIND){const a=S.days[k][f]||[];
+  for(let i=a.length-1;i>=0;i--)if((a[i].pu||0)>0&&!sv[a[i].id]){delete S.idx[a[i].id];a.splice(i,1);ch=true}}   // xoá trong Sheet → xoá ở app
+ for(const k in S.days){S.days[k].log.sort((a,b)=>a.start-b.start);S.days[k].trucks.sort((a,b)=>a.arrive-b.arrive)}
+ return ch}
+function doSync(){
+ if(!GS)return;if(busy){again=true;return}
+ busy=true;
+ const p={logs:[],trucks:[],dels:S.dels.slice()},sent={rows:[],dels:p.dels};
+ for(const k in S.days)for(const [f,t] of KIND)for(const r of S.days[k][f]||[])if(r.u>(r.pu||0)){p[t].push(toRow(f,k,r));sent.rows.push({id:r.id,u:r.u})}
+ setSt();
+ rpc(p).then(res=>{busy=false;errN=0;
+  try{ack(sent);const ch=merge(res);persist();lastOk=Date.now();setSt();if(ch)softRender()}catch(e){errN++;errMsg=String(e);setSt()}
+  if(again){again=false;schedule(100)}},
+ err=>{busy=false;errN++;errMsg=String(err&&err.message||err);setSt();schedule(Math.min(30000,3000*errN))})}
+setInterval(()=>{if(!document.hidden)schedule(0)},15000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule(0)});
+window.addEventListener('online',()=>schedule(0));
+schedule(0);
+render();
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});</script>
+</body>
+</html>
