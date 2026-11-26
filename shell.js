@@ -111,6 +111,12 @@
     if (d && d.khoMsg === 'show-kho' && APP === 'can' && window.top === window) location.href = URLS.phe;
   });
   $('upd').onclick = function () { location.reload(); };
+  // Nút cài app (Chrome Android/máy tính): Chrome báo được phép cài → hiện nút to; đã cài/đang chạy dạng app thì không hiện
+  var instEv = null;
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); instEv = e; if (!standalone && $('inst')) $('inst').style.display = 'block'; });
+  window.addEventListener('appinstalled', function () { instEv = null; if ($('inst')) $('inst').style.display = 'none'; });
+  if ($('inst')) $('inst').onclick = function () { if (!instEv) return; instEv.prompt(); instEv.userChoice.then(function () { instEv = null; $('inst').style.display = 'none'; }); };
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   if (!cfg.exec) setup('');

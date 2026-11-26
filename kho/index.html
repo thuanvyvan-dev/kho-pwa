@@ -17,6 +17,7 @@
   #setup input { width: 100%; box-sizing: border-box; font-size: 20px; padding: 10px; border: 2px solid #94a3b8; border-radius: 8px; margin: 4px 0 12px; }
   #setup button { width: 100%; padding: 14px; font-size: 18px; font-weight: 800; border: none; border-radius: 10px; background: #1e293b; color: #fff; }
   #sMsg { margin-top: 10px; font-weight: 700; color: #b91c1c; }
+  #inst { display: none; position: fixed; right: 10px; bottom: 74px; z-index: 99999; background: #fbbf24; color: #0f172a; border: none; padding: 12px 16px; border-radius: 24px; font-size: 15px; font-weight: 900; box-shadow: 0 3px 12px rgba(0,0,0,.35); cursor: pointer; }
   #upd { display: none; position: fixed; left: 50%; transform: translateX(-50%); top: 6px; z-index: 99999; background: #1e293b; color: #fff; padding: 8px 14px; border-radius: 18px; font-size: 13px; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: pointer; }
 </style>
 </head>
@@ -30,6 +31,7 @@
   <p style="color:#64748b;font-size:14px;">Cách nhanh nhất: mở Web App Kho cũ → bấm <b>📲 Cài app</b>.</p>
 </div>
 <div id="upd">🔄 Có bản mới — chạm để dùng</div>
+<button id="inst" type="button">📲 Cài app Kho Hóa Chất</button>
 <script>var APP = 'kho';</script>
 <script src="../shell.js"></script>
 </body>
