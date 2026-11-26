@@ -4,6 +4,9 @@
 // - Link /exec chỉ lưu trên máy (localStorage), KHÔNG nằm trong repo công khai này.
 (function () {
   var APP = window.APP || 'kho';
+  // Gốc site (thư mục chứa shell.js) → link giữa các app: Hoá chất /kho/, Gia công /gc/, Cân /can/, Kho phế /can/kho/ (trong app Cân)
+  var ROOT = (document.currentScript && document.currentScript.src) ? new URL('.', document.currentScript.src).href : new URL('../', location.href).href;
+  var URLS = { hc: ROOT + 'kho/', gc: ROOT + 'gc/', can: ROOT + 'can/', phe: ROOT + 'can/kho/' };
   var LS = 'KHO_PWA_CFG';
   // Nhận mọi dạng link Web App có /macros/s/<id>/ (dán cả link dài cũng được)
   function execOf_(v) { var m = String(v || '').match(/macros\/s\/([\w-]{20,})/); return m ? 'https://script.google.com/macros/s/' + m[1] + '/exec' : ''; }
@@ -64,7 +67,7 @@
     'window.google={script:{run:new Proxy({},{get:function(_,p){return mk()[p]}})}};})();';
 
   function mount(html) {
-    var pre = '<script>window.KHO_PWA=' + JSON.stringify({ app: APP, khoUrl: '../kho/', canUrl: '../can/' }) + ';' + SHIM + '<\/script>';
+    var pre = '<script>window.KHO_PWA=' + JSON.stringify({ app: APP, urls: URLS, khoUrl: APP === 'can' ? URLS.phe : URLS.hc, canUrl: URLS.can }) + ';' + SHIM + '<\/script>';
     var i = html.search(/<head[^>]*>/i);
     html = i >= 0 ? html.replace(/<head[^>]*>/i, function (m) { return m + pre; }) : pre + html;
     var f = $('app');
@@ -105,7 +108,7 @@
   // Trang Cân đứng riêng (không nằm trong Kho): "← Kho" → mở app Kho
   window.addEventListener('message', function (e) {
     var d = e.data;
-    if (d && d.khoMsg === 'show-kho' && APP === 'can' && window.top === window) location.href = '../kho/';
+    if (d && d.khoMsg === 'show-kho' && APP === 'can' && window.top === window) location.href = URLS.phe;
   });
   $('upd').onclick = function () { location.reload(); };
 
