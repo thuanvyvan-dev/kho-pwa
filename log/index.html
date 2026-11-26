@@ -62,7 +62,7 @@ label{display:block;margin-top:10px;font-size:13px;color:var(--mu)}
 <div id="toast" style="position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:pre-line;text-align:center;z-index:99;font-size:14px"></div>
 <script>
 const KEY='kholog.v1';
-const ACTS=[
+let ACTS=[
  {id:'recv',zh:'收货',vi:'Nhận hàng',c:'#2563eb',hide:1},
  {id:'coil',zh:'卸盘圆',vi:'Dỡ thép cuộn',c:'#7c3aed',hide:1},
  {id:'strap',zh:'卸铁带',vi:'Dỡ đai thép',c:'#0891b2',hide:1},
@@ -84,18 +84,18 @@ const ACTS=[
  {id:'scrap',zh:'称废料',vi:'Cân phế liệu',c:'#78716c'},
  {id:'rest',zh:'休息',vi:'Nghỉ',c:'#94a3b8'},
  {id:'other',zh:'其他',vi:'Khác',c:'#475569'}];
-const A=Object.fromEntries(ACTS.map(a=>[a.id,a]));
+let A=Object.fromEntries(ACTS.map(a=>[a.id,a]));
 const an=e=>e.act==='other'&&e.to?e.to:A[e.act].zh;
 const anv=e=>e.act==='other'&&e.to?'':A[e.act].vi;
 const akey=e=>e.act==='other'&&e.to?'o:'+e.to:e.act;
 function actList(st){const o=ACTS.filter(a=>st.by[a.id]);Object.keys(st.by).filter(k=>k.startsWith('o:')).forEach(k=>o.push({id:k,zh:k.slice(2),vi:'',c:A.other.c}));return o}
 const REASONS=[['货位满','Hết chỗ'],['缺人','Thiếu người'],['叉车忙','Xe nâng bận'],['四厂无码头','Xưởng 4 không bến'],['成品库出柜','Kho TP xuất cont'],['供应商集中到货','NCC giao dồn'],['过磅排队','Xếp hàng cân'],['其他','Khác']];
 // [id, 中文, Việt, cần cân 2 chiều (hàng tính theo kg)]
-const TYPES=[['coil','盘圆','Thép cuộn',1],['strap','铁带','Đai thép',1],['chem','化学品','Hóa chất',1],['powder','粉末','Bột sơn',1],['recv','其他','Khác',0]];
+let TYPES=[['coil','盘圆','Thép cuộn',1,'#7c3aed'],['strap','铁带','Đai thép',1,'#0891b2'],['chem','化学品','Hóa chất',1,'#db2777'],['powder','粉末','Bột sơn',1,'#ca8a04'],['recv','其他','Khác',0,'#475569']];
 const ACTMAP={coil:'coil',strap:'strap'};
 const PLACES=[['K1','K1'],['K2','K2'],['K3','K3'],['厂4','Xưởng 4'],['磅站','Trạm cân'],['办公室','Văn phòng']];
 const STD=45;
-const TC={coil:'#7c3aed',strap:'#0891b2',chem:'#db2777',powder:'#ca8a04',recv:'#475569'};
+let TC={};
 const tyOf=t=>TYPES.find(x=>x[0]===t.type)||['','?','?',1];
 const isW=t=>!!tyOf(t)[3];
 const pl=p=>p[0]===p[1]?p[0]:p[0]+' '+p[1];
@@ -103,7 +103,7 @@ const pl=p=>p[0]===p[1]?p[0]:p[0]+' '+p[1];
 function stage(t){return t.done||t.end?'done':'out'}
 const STEPS={out:['⚖ 出磅 Cân ra · 收货完成 Xong','var(--ok)'],win:['⚖ 进厂过磅 Cân vào','var(--pri)'],start:['▶ 开始卸 Bắt đầu dỡ','var(--pri)'],unload:['✔ 卸完 Dỡ xong','var(--ok)'],wout:['⚖ 出厂过磅 Cân ra','var(--pri)'],fin:['🏁 完成 Hoàn tất','var(--ok)']};
 let S=load(), view=dk(Date.now());
-function norm(o){o.days=o.days||{};o.sups=o.sups||[];o.dels=o.dels||[];o.idx=o.idx||{};return o}
+function norm(o){o.days=o.days||{};o.sups=o.sups||[];o.dels=o.dels||[];o.idx=o.idx||{};o.cfg=o.cfg||{};return o}
 function load(){try{return norm(JSON.parse(localStorage.getItem(KEY))||{})}catch(e){return norm({})}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function sig(r){const {u,pu,_s,...x}=r;return JSON.stringify(x)}
@@ -121,6 +121,30 @@ const mins=(a,b)=>Math.max(0,Math.round((b-a)/60000));
 const D=m=>m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+"'";
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toMs(k,hhmm){const [y,m,d]=k.split('-').map(Number),[h,mi]=hhmm.split(':').map(Number);return new Date(y,m-1,d,h,mi).getTime()}
+
+
+// ---- nút tuỳ chỉnh (Công việc / Nhận hàng): lưu trong S.cfg, đi theo Backup
+const sid=z=>'s'+[...z].map(c=>c.charCodeAt(0).toString(36)).join('');
+function rebuild(){A=Object.fromEntries(ACTS.map(a=>[a.id,a]));TC={};TYPES.forEach(x=>TC[x[0]]=x[4]||'#475569');TC.recv=TC.recv||'#475569'}
+function applyCfg(){const c=S.cfg||{};
+ if(Array.isArray(c.acts)){const have=new Set(c.acts.map(a=>a.id));ACTS=c.acts.concat(ACTS.filter(a=>!have.has(a.id)))}
+ if(Array.isArray(c.types)){const have=new Set(c.types.map(x=>x[0]));TYPES=c.types.concat(TYPES.filter(x=>!have.has(x[0])))}
+ rebuild()}
+function autoAct(z){if(!z||z==='其他')return A.other;let a=A[sid(z)];if(!a){a={id:sid(z),zh:z,vi:'',c:'#475569',hide:1};ACTS.push(a);S.cfg.acts=ACTS;rebuild()}return a}
+function autoType(z){if(!z)return null;const id=sid(z);let x=TYPES.find(t=>t[0]===id);if(!x){x=[id,z,'',1,'#475569',1];TYPES.push(x);S.cfg.types=TYPES;rebuild()}return x}
+applyCfg();
+let CD=null,CK='';
+function cfgDlg(k){CK=k;CD=k==='acts'?ACTS.map(a=>({id:a.id,zh:a.zh,vi:a.vi,c:a.c,w:a.w,hide:!!a.hide,hz:a.hide&&a.id!=='other'})):TYPES.map(x=>({id:x[0],zh:x[1],vi:x[2],w:x[3],c:x[4]||'#475569',hide:!!x[5]}));cfgDraw()}
+function cfgDraw(){const k=CK,st=dlg.open?dlg.scrollTop:0;
+ const h='<form onsubmit="cfgSave();return false"><b>✎ '+(k==='acts'?'工作 Nút Công việc':'收货 Nút Nhận hàng')+'</b><small class="mu"> ▲▼ đổi chỗ · ✕ ẩn · 👁 hiện lại</small><div>'+CD.map((it,i)=>'<div class="row" style="gap:5px;margin-top:8px;opacity:'+(it.hide?.45:1)+'"><input type="color" value="'+it.c+'" oninput="CD['+i+'].c=this.value" style="width:34px;padding:0;flex:none"><input value="'+esc(it.zh)+'" oninput="CD['+i+'].zh=this.value" placeholder="中文" style="width:26%;min-width:0"><input class="sp" value="'+esc(it.vi)+'" oninput="CD['+i+'].vi=this.value" placeholder="Tiếng Việt" style="min-width:0">'+(k==='types'?'<label title="Cân 2 chiều" style="flex:none"><input type="checkbox" '+(it.w?'checked':'')+' onchange="CD['+i+'].w=this.checked?1:0">⚖</label>':'')+'<button type="button" onclick="cfgMv('+i+',-1)">▲</button><button type="button" onclick="cfgMv('+i+',1)">▼</button>'+(it.id==='other'?'':'<button type="button" onclick="CD['+i+'].hide=!CD['+i+'].hide;cfgDraw()">'+(it.hide?'👁':'✕')+'</button>')+'</div>').join('')+'</div><button type="button" style="width:100%;margin-top:10px" onclick="cfgAdd()">＋ Thêm nút mới</button><div class="row" style="margin-top:12px"><button type="button" class="sp" onclick="dlg.close()">取消</button><button class="sp pri">✔ 保存 Lưu</button></div></form>';
+ if(dlg.open)dlg.innerHTML=h;else openDlg(h);dlg.scrollTop=st}
+function cfgMv(i,d){const j=i+d;if(j<0||j>=CD.length)return;[CD[i],CD[j]]=[CD[j],CD[i]];cfgDraw()}
+function cfgAdd(){CD.push({id:'c'+uid(),zh:'',vi:'',c:'#2563eb',w:1,hide:false,nw:1});cfgDraw();const l=dlg.querySelectorAll('input[placeholder="中文"]');l.length&&l[l.length-1].focus()}
+function cfgSave(){const L=CD.filter(it=>!(it.nw&&!it.zh.trim()&&!it.vi.trim()));
+ L.forEach(it=>{it.zh=it.zh.trim()||it.vi.trim();it.vi=it.vi.trim()});
+ if(CK==='acts'){ACTS=L.map(it=>{const o={id:it.id,zh:it.zh,vi:it.vi,c:it.c};if(it.w)o.w=1;if(it.hide)o.hide=1;return o});S.cfg.acts=ACTS}
+ else{TYPES=L.map(it=>[it.id,it.zh,it.vi,it.w?1:0,it.c,it.hide?1:0]);S.cfg.types=TYPES}
+ rebuild();persist();dlg.close();render();toast('✔ 已保存 Đã lưu nút')}
 
 // ---- actions
 function closeActive(now=Date.now()){const l=day().log,a=l.find(e=>!e.end);if(a)a.end=now;return a}
@@ -237,13 +261,13 @@ function editDlg(id){
 function saveLog(id){const e=day().log.find(x=>x.id===id);e.act=ea.value;if(window.eto)e.to=eto.value;if(window.eon)e.to=eon.value.trim();if(es.value)e.start=toMs(view,es.value);e.end=ee.value?toMs(view,ee.value):(e.end?e.end:null);if(e.end&&e.end<e.start)e.end=e.start;day().log.sort((a,b)=>a.start-b.start);save();dlg.close();render()}
 function delLog(id){day().log=day().log.filter(x=>x.id!==id);save();dlg.close();render()}
 function tEditDlg(id){const t=truck(id);
- openDlg(`<b>修改 Sửa ${tname(t)}</b><label>货物 Loại hàng</label><select id="t0">${TYPES.map(x=>`<option value="${x[0]}" ${t.type===x[0]?'selected':''}>${x[1]} ${x[2]}</option>`).join('')}</select>
+ openDlg(`<b>修改 Sửa ${tname(t)}</b><label>货物 Loại hàng</label><select id="t0">${TYPES.filter(x=>!x[5]||x[0]===t.type).map(x=>`<option value="${x[0]}" ${t.type===x[0]?'selected':''}>${x[1]} ${x[2]}</option>`).join('')}</select>
  <label>开始 Bắt đầu nhận</label><input id="t1" type="time" value="${T(t.win||t.start||t.arrive)}">
  <label>完成 Xong</label><input id="t5" type="time" value="${t.done||t.end?T(t.done||t.end):''}">
  <div class="row" style="margin-top:14px"><button class="bad" onclick="dlg.close();tDel('${id}')">删除</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="tSave('${id}')">保存 Lưu</button></div>`)}
 function tSave(id){const t=truck(id),g=i=>{const x=document.getElementById(i);return x&&x.value?toMs(view,x.value):null};
  t.type=t0.value;t.arrive=t.win=t.start=g('t1')||t.arrive;t.end=t.wout=t.done=g('t5');t.m=1;save();dlg.close();render()}
-function backTruckDlg(){openDlg(`<b>补录车辆 Thêm xe bù</b><label>货物 Loại hàng</label><select id="bk0">${TYPES.map(x=>`<option value="${x[0]}">${x[1]} ${x[2]}</option>`).join('')}</select>
+function backTruckDlg(){openDlg(`<b>补录车辆 Thêm xe bù</b><label>货物 Loại hàng</label><select id="bk0">${TYPES.filter(x=>!x[5]).map(x=>`<option value="${x[0]}">${x[1]} ${x[2]}</option>`).join('')}</select>
  <label>开始 Từ</label><input id="bk1" type="time" value="08:00"><label>完成 Đến</label><input id="bk2" type="time" value="${T(Date.now())}">
  <div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="saveBackTruck(false)">保存 + 再加</button><button class="sp pri" onclick="saveBackTruck(true)">保存 Lưu</button></div>`)}
 function saveBackTruck(close){const s=toMs(view,bk1.value),e=toMs(view,bk2.value);if(!(e>s)){alert('完成要晚于开始 / Giờ xong phải sau giờ bắt đầu');return}addTruck(bk0.value,s,e);if(close)dlg.close();else{bk1.value=bk2.value;bk2.value=''}}
@@ -265,12 +289,12 @@ function render(){
  let h=`<div class="row" style="padding-top:max(12px,env(safe-area-inset-top))"><button onclick="shift(-1)">◀</button><div class="sp" style="text-align:center"><b>${view}</b><br><small>资材课 · Nhật ký kho${td?'':' · <span class=bad>xem ngày cũ</span>'}</small><br><small id="st" class="mu"></small></div><button onclick="shift(1)">▶</button></div>`;
  if(!td)h+=`<div class="banner">Đang xem ngày cũ — chỉ sửa/xuất được. <a href="#" onclick="view=dk(Date.now());render();return false">Về hôm nay 回到今天</a></div>`;
  h+=`<div class="card now" style="margin-top:10px">${act?`<div class="mu">进行中 Đang làm</div><div class="n" style="color:${A[act.act].c}">${an(act)} ${anv(act)}</div><div class="t" id="tick" data-s="${act.start}">00:00:00</div><small>从 ${T(act.start)} 开始</small>${act.act==='walk'?`<div class="chips" style="justify-content:center"><small class="mu">去 Đến:</small>${PLACES.map(p=>`<button class="chip ${act.to===p[0]?'sel':''}" onclick="setTo('${act.id}','${p[0]}')">${pl(p)}</button>`).join('')}</div>`:''}`:`<div class="mu">未开始 Chưa bắt đầu</div><div class="t">--:--</div><small>点下面按钮开始 Bấm nút bên dưới</small>`}</div>`;
- h+=`<h2>工作 Công việc (1 chạm)</h2><div class="grid">${ACTS.filter(a=>!a.hide).map(a=>`<button class="act ${act&&act.act===a.id?'on':''}" style="--c:${a.c}" ${td?'':'disabled'} onclick="${a.id==='other'?'otherDlg()':`startAct('${a.id}')`}"><b>${a.id==='walk'?'🚶 ':''}${a.zh}</b><small>${a.vi}</small></button>`).join('')}</div>`;
+ h+=`<h2>工作 Công việc (1 chạm) <button class="chip" style="float:right" onclick="cfgDlg('acts')">✎ 编辑 Sửa nút</button></h2><div class="grid">${ACTS.filter(a=>!a.hide).map(a=>`<button class="act ${act&&act.act===a.id?'on':''}" style="--c:${a.c}" ${td?'':'disabled'} onclick="${a.id==='other'?'otherDlg()':`startAct('${a.id}')`}"><b>${a.id==='walk'?'🚶 ':''}${a.zh}</b><small>${a.vi}</small></button>`).join('')}</div>`;
  const nOpen=st.trucks.filter(t=>stage(t)!=='done').length;
  if(td&&act&&(act.act==='walk'||A[act.act].w)&&nOpen)h+=`<button class="pri" style="width:100%;margin-top:8px;padding:14px;font-size:17px" onclick="startAct('recv')">↩ 回收货 Về nhận hàng (còn ${nOpen} xe)</button>`;
  if(td&&act)h+=`<button style="width:100%;margin-top:8px" onclick="stopAct()">⏹ 停止/下班 Dừng</button>`;
- h+=`<h2>收货 Nhận hàng · chạm đúng loại hàng</h2>`;
- if(td)h+=`<div class="grid">${TYPES.map(x=>`<button class="act" style="--c:${TC[x[0]]}" onclick="addTruck('${x[0]}')"><b>${x[1]}</b><small>${x[2]} · +1 xe</small></button>`).join('')}</div>`;
+ h+=`<h2>收货 Nhận hàng · chạm đúng loại hàng <button class="chip" style="float:right" onclick="cfgDlg('types')">✎ 编辑 Sửa nút</button></h2>`;
+ if(td)h+=`<div class="grid">${TYPES.filter(x=>!x[5]).map(x=>`<button class="act" style="--c:${TC[x[0]]}" onclick="addTruck('${x[0]}')"><b>${x[1]}</b><small>${x[2]} · +1 xe</small></button>`).join('')}</div>`;
  h+=`<button style="width:100%;margin:8px 0" onclick="backTruckDlg()">＋ 补录车辆 Thêm xe bù</button>`;
  const act0=st.trucks.filter(t=>stage(t)!=='done'),done0=st.trucks.filter(t=>stage(t)==='done');
  const truckCard=t=>{const s=stage(t),ty=tyOf(t),nm=tname(t),a=t.win||t.start||t.arrive,en=t.done||t.end,u=mins(a,en||Date.now()),over=t.type==='coil'&&u>STD;
@@ -341,9 +365,9 @@ function toRow(f,k,r){
  return [r.id,k,String(r.n||r.no||''),r.sup&&r.sup!=='?'?r.sup:'',(TYPES.find(x=>x[0]===r.type)||['',''])[1],hm(r.arrive),hm(r.win),hm(r.start),hm(r.end),hm(r.wout),hm(r.done),(r.reasons||[]).join('、'),r.u]}
 function fromRow(f,row,k){
  const id=String(row[0]),u=+row[f==='log'?7:12]||0;
- if(f==='log'){const s=tm(k,row[2]);if(!s)return null;return {id,act:(ACTS.find(a=>a.zh===String(row[4]).trim())||(String(row[4]).trim()==='入库单据'?A.doc:A.other)).id,start:s,end:tm(k,row[3]),to:String(row[5]||''),...(row[6]?{truck:String(row[6])}:{}),u}}
+ if(f==='log'){const s=tm(k,row[2]);if(!s)return null;return {id,act:(ACTS.find(a=>a.zh===String(row[4]).trim())||(String(row[4]).trim()==='入库单据'?A.doc:autoAct(String(row[4]).trim()))).id,start:s,end:tm(k,row[3]),to:String(row[5]||''),...(row[6]?{truck:String(row[6])}:{}),u}}
  const ar=tm(k,row[5])||tm(k,row[7]);if(!ar)return null;
- const wi=tm(k,row[6]),stt=tm(k,row[7]);return {id,no:+row[2]||0,n:+row[2]||0,m:(wi&&stt&&wi!==stt)?0:1,sup:String(row[3]||''),type:(TYPES.find(x=>x[1]===String(row[4]).trim())||[])[0]||null,arrive:ar,win:tm(k,row[6]),start:tm(k,row[7]),end:tm(k,row[8]),wout:tm(k,row[9]),done:tm(k,row[10]),reasons:row[11]?String(row[11]).split(/[、,，]/).map(s=>s.trim()).filter(Boolean):[],u}}
+ const wi=tm(k,row[6]),stt=tm(k,row[7]);return {id,no:+row[2]||0,n:+row[2]||0,m:(wi&&stt&&wi!==stt)?0:1,sup:String(row[3]||''),type:(TYPES.find(x=>x[1]===String(row[4]).trim())||autoType(String(row[4]).trim())||[])[0]||null,arrive:ar,win:tm(k,row[6]),start:tm(k,row[7]),end:tm(k,row[8]),wout:tm(k,row[9]),done:tm(k,row[10]),reasons:row[11]?String(row[11]).split(/[、,，]/).map(s=>s.trim()).filter(Boolean):[],u}}
 function pending(){let n=S.dels.length;for(const k in S.days)for(const [f] of KIND)for(const r of S.days[k][f]||[])if(r.u>(r.pu||0))n++;return n}
 function setSt(){const e=document.getElementById('st');if(!e)return;
  e.onclick=(!IN_GAS&&/^https?:/.test(location.protocol))?setApi:null;
