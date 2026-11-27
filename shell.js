@@ -17,7 +17,9 @@
   if (h) {
     h.split('&').forEach(function (kv) {
       var i = kv.indexOf('='); if (i < 0) return;
-      var k = kv.slice(0, i), v = decodeURIComponent(kv.slice(i + 1));
+      var k = kv.slice(0, i), v = kv.slice(i + 1);
+      // Link cũ bị mã hoá 2 lần (https%253A...): giải đến khi hết %xx
+      for (var n = 0; n < 3 && /%[0-9a-f]{2}/i.test(v); n++) { try { v = decodeURIComponent(v); } catch (e) { break; } }
       if (k === 'u') { var ex = execOf_(v); if (ex) cfg.exec = ex; }
     });
     try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) {}
