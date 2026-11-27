@@ -93,6 +93,23 @@ label{display:block;margin-top:12px;font-size:13px;color:var(--mu)}
 .tf{display:flex;gap:6px;align-items:stretch}
 .tf input{text-align:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .tf button{flex:none;min-width:52px;padding:0 6px;font-size:14px}
+.tb{display:flex;gap:6px;align-items:stretch}
+.tb .big{flex:1;min-height:60px;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.tb .nud{flex:none;min-width:58px;font-size:15px}
+.pill{white-space:nowrap;min-height:30px;padding:1px 10px;border-radius:99px;font-size:13px;color:var(--pri);border-color:var(--pri);background:transparent}
+.now .nm .pr{margin-top:2px}
+#bb{display:none;position:fixed;left:8px;right:8px;bottom:calc(var(--nav) + 10px + env(safe-area-inset-bottom));z-index:40;background:var(--card);border:1px solid var(--pri);border-radius:16px;padding:10px;box-shadow:0 10px 30px #0007;max-width:624px;margin:0 auto}
+#bb.on{display:block}
+#bb .t{font-size:14px;line-height:1.3}
+.pk{text-align:center}
+.pk .hm{display:flex;justify-content:center;align-items:center;gap:2px;font-size:54px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px}
+.pk .hm span{padding:0 12px;border-radius:14px;cursor:pointer}
+.pk .hm span.on{background:var(--pri);color:#fff}
+.dial{touch-action:none;display:block;margin:8px auto;width:min(84vw,330px);height:min(84vw,330px)}
+.pk .rel{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.pk .rel button{min-width:52px}
+.pk .rel.fine{flex-wrap:nowrap}
+.pk .rel.fine button{min-width:0;flex:1;padding:8px 0}
 </style>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -106,6 +123,8 @@ label{display:block;margin-top:12px;font-size:13px;color:var(--mu)}
 <main id="app"></main>
 <nav id="nav"></nav>
 <dialog id="dlg"></dialog>
+<dialog id="dlg2"></dialog>
+<div id="bb"></div>
 <div id="toast" style="position:fixed;left:50%;bottom:calc(var(--nav) + 18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:pre-line;text-align:center;z-index:99;font-size:14px"></div>
 <script>
 const KEY='kholog.v1';
@@ -198,9 +217,9 @@ function closeActive(now=Date.now()){const l=day().log,a=l.find(e=>!e.end);if(a)
 function setTo(id,p){const e=day().log.find(x=>x.id===id);if(e){e.to=e.to===p?'':p;save();render()}}
 function otherNames(){const c={};Object.values(S.days).forEach(d=>d.log.forEach(e=>{if(e.act==='other'&&e.to)c[e.to]=(c[e.to]||0)+1}));return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0])}
 function otherDlg(){const ns=otherNames();openDlg(`<form onsubmit="startOther(onm.value);return false"><b>其他 Việc khác — đặt tên</b><input id="onm" autocomplete="off" placeholder="Tên việc / 名称 → Enter" style="width:100%;margin-top:8px;padding:12px;font-size:16px">${ns.length?`<div class="chips">${ns.map(x=>`<button type="button" class="chip" onclick="startOther(this.textContent)">${esc(x)}</button>`).join('')}</div>`:''}<div class="row" style="margin-top:12px"><button type="button" class="sp" onclick="dlg.close()">取消</button><button class="sp pri">▶ 开始 Bắt đầu</button></div></form>`);setTimeout(()=>{const i=document.getElementById('onm');i&&i.focus()},50)}
-function startOther(n){n=(n||'').trim();if(!n)return;dlg.close();if(!isToday())return;const now=Date.now();closeActive(now);day().log.push({id:uid(),act:'other',start:now,end:null,to:n});save();render()}
-function startAct(id){if(!isToday())return;const now=Date.now(),a=day().log.find(e=>!e.end);if(a&&a.act===id&&id!=='walk')return;closeActive(now);day().log.push({id:uid(),act:id,start:now,end:null});save();render()}
-function stopAct(){closeActive();save();render()}
+function startOther(n){n=(n||'').trim();if(!n)return;dlg.close();if(!isToday())return;const now=Date.now(),pv=closeActive(now),nid=uid();day().log.push({id:nid,act:'other',start:now,end:null,to:n});save();render();bbStart(nid,pv?pv.id:null)}
+function startAct(id){if(!isToday())return;const now=Date.now(),a=day().log.find(e=>!e.end);if(a&&a.act===id&&id!=='walk')return;const pv=closeActive(now),nid=uid();day().log.push({id:nid,act:id,start:now,end:null});save();render();bbStart(nid,pv?pv.id:null)}
+function stopAct(){const a=closeActive();save();render();if(a)bbStop(a.id)}
 function addTruck(type,at,endAt){const ts=day().trucks,id=uid(),now=at||Date.now(),n=ts.filter(x=>x.type===type).reduce((m,x)=>Math.max(m,x.n||x.no||0),0)+1;
  ts.push({id,no:ts.reduce((m,t)=>Math.max(m,t.no||0),0)+1,n,sup:'',type,m:1,arrive:now,win:now,start:now,end:endAt||null,wout:endAt||null,done:endAt||null,reasons:[]});
  if(!at&&isToday()){const a=day().log.find(e=>!e.end);if(!a||a.act!=='recv'){closeActive(now);day().log.push({id:uid(),act:'recv',start:now,end:null})}}
@@ -217,7 +236,7 @@ function tStep(id){const t=truck(id),now=Date.now();if(stage(t)==='done')return;
  save();render();const a=t.win||t.start||t.arrive;toast('✔ '+tname(t)+' '+T(a)+'–'+T(now)+' ('+D(mins(a,now))+')')}
 function tReason(id,r){const t=truck(id),i=t.reasons.indexOf(r);i<0?t.reasons.push(r):t.reasons.splice(i,1);save();render()}
 function tDel(id){if(!confirm('删除这辆车? Xoá xe này?'))return;day().trucks=day().trucks.filter(t=>t.id!==id);save();render()}
-function shift(n){const [y,m,d]=view.split('-').map(Number);view=dk(new Date(y,m-1,d+n).getTime());render()}
+function shift(n){bbHide();const [y,m,d]=view.split('-').map(Number);view=dk(new Date(y,m-1,d+n).getTime());render()}
 
 // ---- dialogs
 const dlg=document.getElementById('dlg');
@@ -302,16 +321,17 @@ function editDlg(id){
  openDlg(`<b>编辑 Sửa</b>
  <label>工作 Việc</label><select id="ea">${ACTS.map(a=>`<option value="${a.id}" ${a.id===e.act?'selected':''}>${a.zh} ${a.vi}</option>`).join('')}</select>
  <label>开始 Bắt đầu</label>${tf('es',T(e.start))}
- <label>结束 Kết thúc ${e.end?'':'(đang chạy)'}</label>${tf('ee',e.end?T(e.end):'')}
+ <label>结束 Kết thúc ${e.end?'':'(đang chạy)'}</label>${tf('ee',e.end?T(e.end):'',1)}
+ <label style="display:flex;gap:10px;align-items:center;color:var(--tx);margin-top:14px"><input type="checkbox" id="eadj" checked style="width:24px;min-height:24px;flex:none"> ↔ 前后工作一起调 Dời luôn việc kề bên cho khớp giờ</label>
  ${e.act==='other'?`<label>名称 Tên việc</label><input id="eon" autocomplete="off" value="${esc(e.to||'')}">`:''}
  ${e.act==='walk'?`<label>去向 Đến</label><select id="eto"><option value="">-</option>${PLACES.map(p=>`<option value="${p[0]}" ${e.to===p[0]?'selected':''}>${pl(p)}</option>`).join('')}</select>`:''}
  <div class="row" style="margin-top:14px"><button class="bad" onclick="delLog('${id}')">删除 Xoá</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="saveLog('${id}')">保存 Lưu</button></div>`)}
-function saveLog(id){const e=day().log.find(x=>x.id===id);e.act=ea.value;if(window.eto)e.to=eto.value;if(window.eon)e.to=eon.value.trim();const sv=tfVal('es'),ev=tfVal('ee');if(sv)e.start=toMs(view,sv);e.end=ev?toMs(view,ev):(e.end?e.end:null);if(e.end&&e.end<e.start)e.end=e.start;day().log.sort((a,b)=>a.start-b.start);save();dlg.close();render()}
+function saveLog(id){const e=day().log.find(x=>x.id===id);e.act=ea.value;if(window.eto)e.to=eto.value;if(window.eon)e.to=eon.value.trim();const sv=tfVal('es'),ev=tfVal('ee'),nb=neighbors(e),os=e.start,oe=e.end,adj=document.getElementById('eadj'),dj=adj&&adj.checked;if(sv)e.start=toMs(view,sv);e.end=ev?toMs(view,ev):(e.end?e.end:null);if(e.end&&e.end<e.start)e.end=e.start;if(dj){if(nb.prev&&e.start!==os)nb.prev.end=Math.max(nb.prev.start,e.start);if(nb.next&&oe&&e.end&&e.end!==oe)nb.next.start=Math.min(e.end,nb.next.end||e.end)}day().log.sort((a,b)=>a.start-b.start);save();dlg.close();render()}
 function delLog(id){day().log=day().log.filter(x=>x.id!==id);save();dlg.close();render()}
 function tEditDlg(id){const t=truck(id);
  openDlg(`<b>修改 Sửa ${tname(t)}</b><label>货物 Loại hàng</label><select id="t0">${TYPES.filter(x=>!x[5]||x[0]===t.type).map(x=>`<option value="${x[0]}" ${t.type===x[0]?'selected':''}>${x[1]} ${x[2]}</option>`).join('')}</select>
  <label>开始 Bắt đầu nhận</label>${tf('t1',T(t.win||t.start||t.arrive))}
- <label>完成 Xong</label>${tf('t5',t.done||t.end?T(t.done||t.end):'')}
+ <label>完成 Xong</label>${tf('t5',t.done||t.end?T(t.done||t.end):'',1)}
  <div class="row" style="margin-top:14px"><button class="bad" onclick="dlg.close();tDel('${id}')">删除</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="tSave('${id}')">保存 Lưu</button></div>`)}
 function tSave(id){const t=truck(id),g=i=>{const v=tfVal(i);return v?toMs(view,v):null};
  t.type=t0.value;t.arrive=t.win=t.start=g('t1')||t.arrive;t.end=t.wout=t.done=g('t5');t.m=1;save();dlg.close();render()}
@@ -342,7 +362,7 @@ function jumpDate(){const i=document.createElement('input');i.type='date';i.valu
 function headHtml(td,act,st){
  let h=`<div><div class="hd"><button class="ib" onclick="shift(-1)" aria-label="prev">◀</button><div class="hc" onclick="jumpDate()"><b>${view}</b> <small style="display:inline">${wdOf(view)}</small><small>资材课 · Nhật ký kho${td?'':' · <span class=bad>ngày cũ</span>'}</small><small id="st" class="mu"></small></div><button class="ib" onclick="shift(1)" aria-label="next">▶</button></div>`;
  if(!td)h+=`<div class="banner">Đang xem ngày cũ — chỉ sửa/xuất được · <a href="#" onclick="view=dk(Date.now());render();return false">Về hôm nay 回到今天</a></div>`;
- else if(act){const a=A[act.act];h+=`<div class="now" style="--c:${a.c}"><div class="nm"><b>${esc(an(act))}</b><small>${esc(anv(act))||'从 '+T(act.start)+' 开始'}</small></div><div class="tm" id="tick" data-s="${act.start}">00:00:00</div><button class="stop" onclick="stopAct()" aria-label="stop">⏹</button></div>`;
+ else if(act){const a=A[act.act];h+=`<div class="now" style="--c:${a.c}"><div class="nm"><b>${esc(an(act))}</b><div class="pr"><button class="pill" onclick="fixStart('${act.id}')">从 ${T(act.start)} ✎</button></div></div><div class="tm" id="tick" data-s="${act.start}">00:00:00</div><button class="stop" onclick="stopAct()" aria-label="stop">⏹</button></div>`;
   if(act.act==='walk')h+=`<div class="chips sub"><small class="mu" style="align-self:center">去 Đến:</small>${PLACES.map(p=>`<button class="chip ${act.to===p[0]?'sel':''}" onclick="setTo('${act.id}','${p[0]}')">${pl(p)}</button>`).join('')}</div>`;
   const nOpen=st.trucks.filter(t=>stage(t)!=='done').length;
   if((act.act==='walk'||A[act.act].w)&&nOpen)h+=`<button class="pri full sub" onclick="startAct('recv')">↩ 回收货 Về nhận hàng (còn ${nOpen} xe)</button>`}
@@ -388,14 +408,79 @@ function render(){
  tick();setSt();
 }
 // ---- ô giờ gõ số (thay đồng hồ xoay của Android): "0830" → 08:30, nút −5/+5/Bây giờ
-function tf(id,v){return `<div class="tf"><button type="button" onclick="tfAdj('${id}',-5)">−5'</button><input id="${id}" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="hh:mm" value="${v||''}" oninput="tfFmt(this)" onblur="tfNorm(this)"><button type="button" onclick="tfAdj('${id}',5)">+5'</button><button type="button" onclick="tfNow('${id}')">现在</button></div>`}
+function tf(id,v,clear){return `<div class="tb"><button type="button" class="nud" onclick="tfAdj('${id}',-5)">−5'</button><button type="button" class="big" id="${id}b" onclick="pickFor('${id}',${clear?1:0})">${v||'--:--'}</button><button type="button" class="nud" onclick="tfAdj('${id}',5)">+5'</button><input type="hidden" id="${id}" value="${v||''}"></div>`}
 function tfFmt(el){const d=el.value.replace(/\D/g,'').slice(0,4);el.value=d.length>2?d.slice(0,2)+':'+d.slice(2):d}
 function tfParse(s){const d=String(s||'').replace(/\D/g,'');if(!d)return null;let h,m;if(d.length<=2){h=+d;m=0}else{h=+d.slice(0,d.length-2);m=+d.slice(-2)}return h>23||m>59?null:h*60+m}
-function tfSet(el,min){el.value=String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0')}
-function tfNorm(el){const m=tfParse(el.value);if(m==null)el.value='';else tfSet(el,m)}
+function tfSet(el,min){el.value=String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');const b=document.getElementById(el.id+'b');if(b)b.textContent=el.value}
+function tfNorm(el){const m=tfParse(el.value);if(m==null){el.value='';const b=document.getElementById(el.id+'b');if(b)b.textContent='--:--'}else tfSet(el,m)}
 function tfVal(id){const el=document.getElementById(id);if(!el)return '';tfNorm(el);return el.value}
 function tfAdj(id,dm){const el=document.getElementById(id);let m=tfParse(el.value);if(m==null){const n=new Date();m=n.getHours()*60+n.getMinutes()}tfSet(el,((m+dm)%1440+1440)%1440)}
 function tfNow(id){const n=new Date();tfSet(document.getElementById(id),n.getHours()*60+n.getMinutes())}
+
+// ---- chỉnh giờ: (1) thanh "thực ra lúc mấy giờ?" ngay sau khi đổi/dừng việc  (2) đồng hồ quay TO, chạm là chọn  (3) sửa giờ thì việc kề bên tự dời cho khớp
+const dlg2=document.getElementById('dlg2');
+let PK=null,BB=null,bbTm=0;
+const BBN=[5,10,15,30,60];
+const pkP=n=>String(n).padStart(2,'0');
+const dayStartMs=()=>toMs(view,'00:00');
+// việc liền trước (kết thúc đúng lúc việc này bắt đầu) / liền sau (bắt đầu đúng lúc việc này kết thúc)
+function neighbors(e){const L=day().log;return {prev:L.find(x=>x!==e&&x.end&&Math.abs(x.end-e.start)<2000),next:e.end?L.find(x=>x!==e&&Math.abs(x.start-e.end)<2000):null}}
+function lowerBound(e,prev){if(prev)return prev.start;const ends=day().log.filter(x=>x!==e&&x.end&&x.end<=e.start).map(x=>x.end);return ends.length?Math.max(...ends):dayStartMs()}
+// --- thanh lùi giờ (hiện ~20s sau khi bắt đầu/dừng): chạm "15' trước" là xong, việc trước tự khớp
+function bbStart(id,prevId){BB={kind:'start',id,prevId};bbDraw();bbArm()}
+function bbStop(id){BB={kind:'stop',id};bbDraw();bbArm()}
+function bbArm(){clearTimeout(bbTm);bbTm=setTimeout(bbHide,20000)}
+function bbHide(){BB=null;clearTimeout(bbTm);const el=document.getElementById('bb');if(el)el.className=''}
+function bbCur(){return BB&&day().log.find(x=>x.id===BB.id)}
+function bbDraw(){const el=document.getElementById('bb'),e=bbCur();if(!e){bbHide();return}
+ const prev=BB.kind==='start'?day().log.find(x=>x.id===BB.prevId):null,cur=BB.kind==='start'?e.start:e.end,lo=BB.kind==='start'?lowerBound(e,prev):e.start;
+ const chips=BBN.map(n=>{const ok=cur-n*60000>=lo;return `<button class="chip" ${ok?'':'disabled'} onclick="bbMove(${n})">${n<60?n+"'":'1h'} trước</button>`}).join('');
+ el.innerHTML=`<div class="row"><div class="sp t">${BB.kind==='start'?'▶ <b>'+esc(an(e))+'</b> bắt đầu':'⏹ <b>Đã dừng</b>'} lúc <b>${T(cur)}</b><br><span class="mu">Thực ra là lúc mấy giờ? Chạm để lùi giờ:</span></div><button class="ghost sq" onclick="bbHide()" aria-label="close">✕</button></div><div class="chips">${chips}<button class="chip pri" onclick="bbPick()">🕒 Chọn giờ…</button></div>`;
+ el.className='on'}
+function bbSet(ms){const e=bbCur();if(!e)return;const L=day().log,now=Date.now();
+ if(BB.kind==='start'){const prev=L.find(x=>x.id===BB.prevId),lo=lowerBound(e,prev);ms=Math.max(lo,Math.min(ms,now));e.start=ms;if(prev)prev.end=ms}
+ else{ms=Math.max(e.start,Math.min(ms,now));e.end=ms}
+ save();render();bbDraw();bbArm()}
+function bbMove(n){const e=bbCur();if(e)bbSet((BB.kind==='start'?e.start:e.end)-n*60000)}
+function bbPick(){const e=bbCur();if(!e)return;clearTimeout(bbTm);
+ openPicker({title:BB.kind==='start'?'Việc này thực sự bắt đầu lúc?':'Việc này thực sự dừng lúc?',value:T(BB.kind==='start'?e.start:e.end),ok:v=>bbSet(toMs(view,v))})}
+// --- chỉnh giờ bắt đầu của việc đang chạy (chạm vào "从 hh:mm ✎" trên thẻ đang làm)
+function fixStart(id){const e=day().log.find(x=>x.id===id);if(!e)return;
+ openPicker({title:'Việc này thực sự bắt đầu lúc?',value:T(e.start),ok:v=>{const nb=neighbors(e),lo=nb.prev?nb.prev.start:dayStartMs();const ms=Math.max(lo,Math.min(toMs(view,v),e.end||Date.now()));e.start=ms;if(nb.prev)nb.prev.end=ms;save();render()}})}
+// --- đồng hồ quay: vòng ngoài 1–12, vòng trong 13–00 (như đồng hồ Android), chạm giờ rồi chạm phút; ±1'/±5'/±1h; "X phút trước"
+function pickFor(id,clear){const el=document.getElementById(id),lb=el.parentElement.previousElementSibling;
+ openPicker({title:lb?lb.textContent.trim():'Chọn giờ',value:el.value,clear:!!clear,ok:v=>{el.value=v;tfNorm(el)},clr:()=>{el.value='';tfNorm(el)}})}
+function openPicker(o){const m=tfParse(o.value),n=new Date();PK={t:m==null?n.getHours()*60+n.getMinutes():m,mode:'h',o,drag:0};pkDraw();dlg2.showModal()}
+function pkPt(r,i){const a=i*Math.PI/6;return [Math.round(r*Math.sin(a)*10)/10,Math.round(-r*Math.cos(a)*10)/10]}
+function pkSvg(){const h=Math.floor(PK.t/60),m=PK.t%60,inH=h===0||h>12;let sel,s='';
+ sel=PK.mode==='h'?pkPt(inH?72:114,h%12):pkPt(114,m/5);
+ s+=`<circle r="148" style="fill:var(--bg)"/><line x1="0" y1="0" x2="${sel[0]}" y2="${sel[1]}" style="stroke:var(--pri);stroke-width:3"/><circle r="5" style="fill:var(--pri)"/><circle cx="${sel[0]}" cy="${sel[1]}" r="${PK.mode==='h'&&inH?21:27}" style="fill:var(--pri)"/>`;
+ const tx=(p,v,fs,on)=>`<text x="${p[0]}" y="${p[1]}" text-anchor="middle" dominant-baseline="central" font-size="${fs}" font-weight="700" style="fill:${on?'#fff':'var(--tx)'};pointer-events:none">${v}</text>`;
+ if(PK.mode==='h')for(let i=0;i<12;i++){const ov=i===0?12:i,iv=i===0?0:i+12;s+=tx(pkPt(114,i),ov,22,h===ov)+tx(pkPt(72,i),pkP(iv),17,h===iv)}
+ else for(let i=0;i<12;i++)s+=tx(pkPt(114,i),pkP(i*5),22,m===i*5);
+ return s}
+function pkUpd(){const h=Math.floor(PK.t/60),m=PK.t%60,H=document.getElementById('pkh'),M=document.getElementById('pkm');
+ H.textContent=pkP(h);M.textContent=pkP(m);H.className=PK.mode==='h'?'on':'';M.className=PK.mode==='m'?'on':'';
+ document.getElementById('dial').innerHTML=pkSvg()}
+function pkDraw(){const o=PK.o;
+ dlg2.innerHTML=`<div class="pk"><b>${esc(o.title)}</b><div class="hm"><span id="pkh" onclick="pkMode('h')"></span>:<span id="pkm" onclick="pkMode('m')"></span></div>
+ <svg id="dial" class="dial" viewBox="-150 -150 300 300" onpointerdown="pkDown(event)" onpointermove="pkMove(event)" onpointerup="pkUp(event)" onpointercancel="pkUp(event)"></svg>
+ <div class="rel fine">${[['−1h',-60],['−5\'',-5],['−1\'',-1],['+1\'',1],['+5\'',5],['+1h',60]].map(x=>`<button type="button" onclick="pkAdj(${x[1]})">${x[0]}</button>`).join('')}</div>
+ <div class="rel"><button type="button" class="chip" onclick="pkRel(0)">现在 Bây giờ</button>${[5,10,15,20,30,45,60].map(n=>`<button type="button" class="chip" onclick="pkRel(${n})">${n<60?n+"'":'1h'} trước</button>`).join('')}</div>
+ <div class="row" style="margin-top:12px"><button type="button" class="sp" onclick="dlg2.close()">取消 Huỷ</button>${o.clear?'<button type="button" class="sp" onclick="pkClr()">Xoá giờ</button>':''}<button type="button" class="sp pri" style="min-height:54px;font-size:18px" onclick="pkOk()">✔ OK</button></div></div>`;
+ pkUpd()}
+function pkMode(m){PK.mode=m;pkUpd()}
+function pkAdj(d){PK.t=((PK.t+d)%1440+1440)%1440;pkUpd()}
+function pkRel(n){const d=new Date();PK.t=((d.getHours()*60+d.getMinutes()-n)%1440+1440)%1440;pkUpd()}
+function pkHit(e){const r=e.currentTarget.getBoundingClientRect(),k=300/r.width,dx=(e.clientX-r.left-r.width/2)*k,dy=(e.clientY-r.top-r.height/2)*k,rad=Math.hypot(dx,dy);let a=Math.atan2(dx,-dy)*180/Math.PI;if(a<0)a+=360;
+ const i=Math.round(a/30)%12;
+ if(PK.mode==='h'){const h=rad<93?(i===0?0:i+12):(i===0?12:i);PK.t=h*60+PK.t%60}else PK.t=Math.floor(PK.t/60)*60+i*5;
+ pkUpd()}
+function pkDown(e){e.preventDefault();try{e.currentTarget.setPointerCapture(e.pointerId)}catch(x){}PK.drag=1;pkHit(e)}
+function pkMove(e){if(PK.drag)pkHit(e)}
+function pkUp(){if(!PK.drag)return;PK.drag=0;if(PK.mode==='h'){PK.mode='m';pkUpd()}}
+function pkOk(){const f=PK.o.ok,v=pkP(Math.floor(PK.t/60))+':'+pkP(PK.t%60);dlg2.close();f(v)}
+function pkClr(){const f=PK.o.clr;dlg2.close();if(f)f()}
 function tick(){const now=Date.now(),t=document.getElementById('tick');if(t){let s=Math.max(0,Math.floor((now-t.dataset.s)/1000));t.textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,'0')).join(':')}
  document.querySelectorAll('.tu').forEach(u=>u.textContent=D(mins(+u.dataset.s,now)))}
 setInterval(tick,1000);setInterval(()=>{if(isToday())softRender()},60000);
