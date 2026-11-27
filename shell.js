@@ -10,7 +10,7 @@
   var LS = 'KHO_PWA_CFG';
   // Nhận mọi dạng link Web App có /macros/s/<id>/ (dán cả link dài cũng được)
   function execOf_(v) { var m = String(v || '').match(/macros\/s\/([\w-]{20,})/); return m ? 'https://script.google.com/macros/s/' + m[1] + '/exec' : ''; }
-  var cfg = {}, startTab = '';
+  var cfg = {};
   try { cfg = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { cfg = {}; }
   // Link cài lần đầu: .../kho/#u=<link /exec>  (phần sau # không gửi lên máy chủ nào)
   var h = location.hash.replace(/^#/, '');
@@ -21,7 +21,6 @@
       // Link cũ bị mã hoá 2 lần (https%253A...): giải đến khi hết %xx
       for (var n = 0; n < 3 && /%[0-9a-f]{2}/i.test(v); n++) { try { v = decodeURIComponent(v); } catch (e) { break; } }
       if (k === 'u') { var ex = execOf_(v); if (ex) cfg.exec = ex; }
-      if (k === 't') startTab = v;   // app vỏ Android "Nhật ký kho": mở thẳng tab (hist); không lưu, mỗi lần mở truyền lại
     });
     try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) {}
     history.replaceState(null, '', location.pathname + location.search);
@@ -87,7 +86,7 @@
         html = html.replace(/<head[^>]*>/i, function (m) { return m + '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content, viewport-fit=cover">'; });
       }
     }
-    var pre = '<script>window.KHO_PWA=' + JSON.stringify({ app: APP, urls: URLS, khoUrl: APP === 'can' ? URLS.phe : URLS.hc, canUrl: URLS.can, start: startTab }) + ';' + SHIM + '<\/script>';
+    var pre = '<script>window.KHO_PWA=' + JSON.stringify({ app: APP, urls: URLS, khoUrl: APP === 'can' ? URLS.phe : URLS.hc, canUrl: URLS.can }) + ';' + SHIM + '<\/script>';
     var i = html.search(/<head[^>]*>/i);
     html = i >= 0 ? html.replace(/<head[^>]*>/i, function (m) { return m + pre; }) : pre + html;
     var f = $('app');
