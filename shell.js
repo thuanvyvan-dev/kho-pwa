@@ -66,7 +66,24 @@
     'R(p,a).then(function(r){if(s)s(r,u)},function(e){if(f)f(e,u);else console.error(e)})}}})}' +
     'window.google={script:{run:new Proxy({},{get:function(_,p){return mk()[p]}})}};})();';
 
+  function syncFrameViewport_() {
+    var f = $('app');
+    if (!f || !window.visualViewport) return;
+    f.style.height = Math.round(window.visualViewport.height) + 'px';
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncFrameViewport_);
+    window.visualViewport.addEventListener('scroll', syncFrameViewport_);
+  }
+
   function mount(html) {
+    if (!/interactive-widget=resizes-content/i.test(html)) {
+      if (/<meta[^>]+name=["']viewport["']/i.test(html)) {
+        html = html.replace(/(<meta[^>]+name=["']viewport["'][^>]*content=["'][^"']*)(["'])/i, '$1, interactive-widget=resizes-content$2');
+      } else {
+        html = html.replace(/<head[^>]*>/i, function (m) { return m + '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content, viewport-fit=cover">'; });
+      }
+    }
     var pre = '<script>window.KHO_PWA=' + JSON.stringify({ app: APP, urls: URLS, khoUrl: APP === 'can' ? URLS.phe : URLS.hc, canUrl: URLS.can }) + ';' + SHIM + '<\/script>';
     var i = html.search(/<head[^>]*>/i);
     html = i >= 0 ? html.replace(/<head[^>]*>/i, function (m) { return m + pre; }) : pre + html;
@@ -77,6 +94,7 @@
       document.body.appendChild(f);
     }
     f.srcdoc = html;
+    syncFrameViewport_();
     $('boot').style.display = 'none';
   }
 
@@ -98,7 +116,15 @@
       fetchUi().then(function (t) {
         if (hasCaches) caches.open(UI_CACHE).then(function (c) { c.put(UI_KEY, new Response(t, { headers: { 'Content-Type': 'text/html' } })); });
         if (!old) mount(t);
-        else if (old !== t) $('upd').style.display = 'block';   // bản mới: lần mở sau tự dùng, hoặc chạm để dùng ngay
+        else if (old !== t) {
+          var stuck = false;
+          try {
+            var f = $('app'), il = f && f.contentDocument && f.contentDocument.getElementById('itemList');
+            if (il && /Đang mở dữ liệu kho/i.test(il.textContent || '')) stuck = true;
+          } catch (e) {}
+          if (stuck) mount(t);
+          else $('upd').style.display = 'block';   // bản mới: lần mở sau tự dùng, hoặc chạm để dùng ngay
+        }
       }, function (e) {
         if (!old) { $('boot').textContent = '❌ Không tải được giao diện: ' + e.message + ' — kiểm tra mạng rồi mở lại.'; }
       });
