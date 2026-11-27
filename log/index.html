@@ -2,52 +2,97 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Nhật ký kho 资材课</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--tx:#111827;--mu:#6b7280;--bd:#e5e7eb;--pri:#2563eb;--warn:#dc2626;--ok:#16a34a}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#1a1d24;--tx:#f3f4f6;--mu:#9ca3af;--bd:#2d323c}}
+:root{--bg:#f3f4f6;--card:#fff;--tx:#0f172a;--mu:#64748b;--bd:#e2e8f0;--pri:#2563eb;--warn:#dc2626;--ok:#16a34a;--nav:62px}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0f17;--card:#151b26;--tx:#f1f5f9;--mu:#94a3b8;--bd:#263042}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 system-ui,-apple-system,"Microsoft YaHei","Segoe UI",sans-serif;padding:0 12px calc(40px + env(safe-area-inset-bottom))}
-main{max-width:640px;margin:0 auto}
-h2{font-size:14px;margin:18px 2px 8px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
-.row{display:flex;gap:8px;align-items:center}
-.sp{flex:1}
+html{-webkit-text-size-adjust:100%}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,pre{-webkit-user-select:text;user-select:text}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.35 system-ui,-apple-system,"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;min-height:100dvh}
+main{max-width:640px;margin:0 auto;padding:10px 12px calc(var(--nav) + 28px + env(safe-area-inset-bottom))}
+h2{font-size:14px;margin:0;min-width:0;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
 small,.mu{color:var(--mu);font-size:12px}
-button{font:inherit;color:inherit;border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:10px;cursor:pointer}
-button:active{transform:scale(.97)}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.act{min-height:68px;text-align:center;border-left:5px solid var(--c);line-height:1.2}
-.act b{display:block;font-size:17px}
-.act small{display:block}
-.act.on{background:var(--c);color:#fff;border-color:var(--c)}
-.act.on small{color:#fff;opacity:.85}
-.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.row{display:flex;gap:8px;align-items:center}
+.sp{flex:1;min-width:0}
 .bad{color:var(--warn)}
-.now{text-align:center;padding:14px}
-.now .t{font-size:34px;font-variant-numeric:tabular-nums;font-weight:700}
-.now .n{font-size:18px;font-weight:600}
+button{font:inherit;color:inherit;border:1px solid var(--bd);background:var(--card);border-radius:12px;padding:10px 12px;min-height:44px;cursor:pointer;touch-action:manipulation}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.45}
+.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.full{width:100%}
+.ghost{flex:none;white-space:nowrap;min-height:34px;padding:4px 10px;border-radius:99px;font-size:13px;color:var(--mu)}
+/* ---- thanh trên dính: ngày + việc đang làm ---- */
+#top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--bd);padding:max(6px,env(safe-area-inset-top)) 12px 8px}
+#top>div{max-width:640px;margin:0 auto}
+.hd{display:flex;align-items:center;gap:8px}
+.hd .ib{width:44px;padding:0;font-size:15px}
+.hc{flex:1;text-align:center;line-height:1.2;cursor:pointer}
+.hc b{font-size:17px}
+.hc small{display:block}
+.now{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;border-radius:14px;background:var(--card);border:1px solid var(--bd);border-left:6px solid var(--c,var(--bd))}
+.now .nm{flex:1;min-width:0;line-height:1.2}
+.now .nm b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.now .nm small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.now .tm{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.now .stop{min-width:48px;padding:0;font-size:18px;border-color:var(--warn);color:var(--warn)}
+.now.idle{border-left-color:var(--bd)}
+.now.idle .nm b{color:var(--mu);font-weight:600}
+.sub{margin-top:8px}
+.banner{background:#f59e0b;color:#000;border-radius:12px;padding:8px 10px;text-align:center;margin-top:8px;font-size:14px}
+.banner a{color:#000;font-weight:700}
+/* ---- lưới nút ---- */
+.sh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 2px 8px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media (min-width:540px){.grid{grid-template-columns:repeat(3,1fr)}}
+.act{min-height:68px;padding:8px 10px;text-align:left;border-left:6px solid var(--c);display:flex;flex-direction:column;justify-content:center;gap:2px;line-height:1.2}
+.act b{font-size:17px;font-weight:700}
+.act small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px}
+.act.on{background:var(--c);color:#fff;border-color:var(--c)}
+.act.on small{color:#fff;opacity:.9}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{padding:5px 10px;border-radius:99px;font-size:13px}
+.chip{padding:5px 12px;border-radius:99px;font-size:14px;min-height:36px}
 .chip.on{background:var(--warn);color:#fff;border-color:var(--warn)}
 .chip.sel{background:var(--pri);color:#fff;border-color:var(--pri)}
+/* ---- thẻ ---- */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
 .truck{margin-bottom:8px}
-.truck .h{display:flex;justify-content:space-between;font-weight:600}
-.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;text-align:center}
-.kv div{background:var(--bg);border-radius:8px;padding:6px}
-.kv b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
-.log{display:flex;gap:8px;padding:9px 4px;border-bottom:1px solid var(--bd);align-items:center}
+.truck .h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+.truck .big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
+.log{display:flex;gap:10px;padding:0 4px;min-height:52px;border-bottom:1px solid var(--bd);align-items:center;cursor:pointer}
 .log:last-child{border:0}
+.log .t{font-variant-numeric:tabular-nums;white-space:nowrap}
+.log .tr{min-width:104px}
+.log .td{min-width:48px;text-align:right}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .bar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;margin-top:3px}
 .bar i{display:block;height:100%}
-pre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border-radius:10px;padding:10px;font-size:12px;max-height:280px;overflow:auto;margin:8px 0 0}
-dialog{border:0;border-radius:16px;padding:16px;width:min(92vw,420px);background:var(--card);color:var(--tx)}
-dialog::backdrop{background:#0008}
-input,select{font:inherit;padding:9px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);width:100%}
-label{display:block;margin-top:10px;font-size:13px;color:var(--mu)}
-.banner{background:#f59e0b;color:#000;border-radius:10px;padding:8px;text-align:center;margin-top:8px;font-size:13px}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--mu);padding:8px 2px;font-size:14px}
+pre{white-space:pre-wrap;word-break:break-all;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:12px;max-height:300px;overflow:auto;margin:6px 0 0}
+/* ---- thanh tab dưới ---- */
+#nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
+#nav button{border:0;border-radius:0;background:none;min-height:var(--nav);padding:6px 0 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.15;color:var(--mu);border-top:3px solid transparent}
+#nav button.on{color:var(--pri);border-top-color:var(--pri)}
+#nav i{font-style:normal;font-size:20px;position:relative}
+#nav i em{position:absolute;top:-4px;right:-12px;background:var(--warn);color:#fff;font-style:normal;font-size:11px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+#nav b{font-size:13px}
+#nav small{font-size:10.5px}
+/* ---- hộp thoại dạng tờ kéo từ dưới ---- */
+dialog{border:0;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));margin:auto auto 0;width:100%;max-width:560px;max-height:calc(100dvh - 24px);background:var(--card);color:var(--tx);overflow:auto}
+dialog[open]{animation:sheet .18s ease-out}
+@keyframes sheet{from{transform:translateY(28px);opacity:.5}}
+dialog::backdrop{background:#0009}
+input,select{font:inherit;padding:10px;min-height:44px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);width:100%}
+label{display:block;margin-top:12px;font-size:13px;color:var(--mu)}
+.sq{width:38px;min-height:40px;padding:0;flex:none}
+/* ô giờ: gõ số (0830 → 08:30) + nút ±5 phút, không dùng đồng hồ xoay */
+.tf{display:flex;gap:6px;align-items:stretch}
+.tf input{text-align:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.tf button{flex:none;min-width:52px;padding:0 6px;font-size:14px}
 </style>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -57,9 +102,11 @@ label{display:block;margin-top:10px;font-size:13px;color:var(--mu)}
 <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
+<header id="top"></header>
 <main id="app"></main>
+<nav id="nav"></nav>
 <dialog id="dlg"></dialog>
-<div id="toast" style="position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:pre-line;text-align:center;z-index:99;font-size:14px"></div>
+<div id="toast" style="position:fixed;left:50%;bottom:calc(var(--nav) + 18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:pre-line;text-align:center;z-index:99;font-size:14px"></div>
 <script>
 const KEY='kholog.v1';
 let ACTS=[
@@ -136,7 +183,7 @@ applyCfg();
 let CD=null,CK='';
 function cfgDlg(k){CK=k;CD=k==='acts'?ACTS.map(a=>({id:a.id,zh:a.zh,vi:a.vi,c:a.c,w:a.w,hide:!!a.hide,hz:a.hide&&a.id!=='other'})):TYPES.map(x=>({id:x[0],zh:x[1],vi:x[2],w:x[3],c:x[4]||'#475569',hide:!!x[5]}));cfgDraw()}
 function cfgDraw(){const k=CK,st=dlg.open?dlg.scrollTop:0;
- const h='<form onsubmit="cfgSave();return false"><b>✎ '+(k==='acts'?'工作 Nút Công việc':'收货 Nút Nhận hàng')+'</b><small class="mu"> ▲▼ đổi chỗ · ✕ ẩn · 👁 hiện lại</small><div>'+CD.map((it,i)=>'<div class="row" style="gap:5px;margin-top:8px;opacity:'+(it.hide?.45:1)+'"><input type="color" value="'+it.c+'" oninput="CD['+i+'].c=this.value" style="width:34px;padding:0;flex:none"><input value="'+esc(it.zh)+'" oninput="CD['+i+'].zh=this.value" placeholder="中文" style="width:26%;min-width:0"><input class="sp" value="'+esc(it.vi)+'" oninput="CD['+i+'].vi=this.value" placeholder="Tiếng Việt" style="min-width:0">'+(k==='types'?'<label title="Cân 2 chiều" style="flex:none"><input type="checkbox" '+(it.w?'checked':'')+' onchange="CD['+i+'].w=this.checked?1:0">⚖</label>':'')+'<button type="button" onclick="cfgMv('+i+',-1)">▲</button><button type="button" onclick="cfgMv('+i+',1)">▼</button>'+(it.id==='other'?'':'<button type="button" onclick="CD['+i+'].hide=!CD['+i+'].hide;cfgDraw()">'+(it.hide?'👁':'✕')+'</button>')+'</div>').join('')+'</div><button type="button" style="width:100%;margin-top:10px" onclick="cfgAdd()">＋ Thêm nút mới</button><div class="row" style="margin-top:12px"><button type="button" class="sp" onclick="dlg.close()">取消</button><button class="sp pri">✔ 保存 Lưu</button></div></form>';
+ const h='<form onsubmit="cfgSave();return false"><b>✎ '+(k==='acts'?'工作 Nút Công việc':'收货 Nút Nhận hàng')+'</b><small class="mu"> ▲▼ đổi chỗ · ✕ ẩn · 👁 hiện lại</small><div>'+CD.map((it,i)=>'<div class="row" style="gap:5px;margin-top:8px;opacity:'+(it.hide?.45:1)+'"><input type="color" value="'+it.c+'" oninput="CD['+i+'].c=this.value" style="width:34px;padding:0;flex:none"><input value="'+esc(it.zh)+'" oninput="CD['+i+'].zh=this.value" placeholder="中文" style="width:26%;min-width:0"><input class="sp" value="'+esc(it.vi)+'" oninput="CD['+i+'].vi=this.value" placeholder="Tiếng Việt" style="min-width:0">'+(k==='types'?'<label title="Cân 2 chiều" style="flex:none"><input type="checkbox" '+(it.w?'checked':'')+' onchange="CD['+i+'].w=this.checked?1:0">⚖</label>':'')+'<button type="button" class="sq" onclick="cfgMv('+i+',-1)">▲</button><button type="button" class="sq" onclick="cfgMv('+i+',1)">▼</button>'+(it.id==='other'?'':'<button type="button" class="sq" onclick="CD['+i+'].hide=!CD['+i+'].hide;cfgDraw()">'+(it.hide?'👁':'✕')+'</button>')+'</div>').join('')+'</div><button type="button" style="width:100%;margin-top:10px" onclick="cfgAdd()">＋ Thêm nút mới</button><div class="row" style="margin-top:12px"><button type="button" class="sp" onclick="dlg.close()">取消</button><button class="sp pri">✔ 保存 Lưu</button></div></form>';
  if(dlg.open)dlg.innerHTML=h;else openDlg(h);dlg.scrollTop=st}
 function cfgMv(i,d){const j=i+d;if(j<0||j>=CD.length)return;[CD[i],CD[j]]=[CD[j],CD[i]];cfgDraw()}
 function cfgAdd(){CD.push({id:'c'+uid(),zh:'',vi:'',c:'#2563eb',w:1,hide:false,nw:1});cfgDraw();const l=dlg.querySelectorAll('input[placeholder="中文"]');l.length&&l[l.length-1].focus()}
@@ -175,6 +222,8 @@ function shift(n){const [y,m,d]=view.split('-').map(Number);view=dk(new Date(y,m
 // ---- dialogs
 const dlg=document.getElementById('dlg');
 function openDlg(h){dlg.style.width='';dlg.innerHTML=h;dlg.showModal()}
+// tắt thanh gợi ý Autofill (ổ khoá/thẻ/vị trí) của bàn phím cho mọi ô nhập, kể cả ô sinh sau
+new MutationObserver(()=>dlg.querySelectorAll('input,textarea').forEach(i=>{if(!i._nf){i._nf=1;i.setAttribute('autocomplete','off');i.setAttribute('data-lpignore','true');i.setAttribute('data-form-type','other')}})).observe(dlg,{childList:true,subtree:true});
 // ---- 老板看板 (Gantt: mỗi xe 1 thanh, chồng nhau = làm cùng lúc)
 let BCV=null;
 function boardDraw(k){
@@ -236,41 +285,40 @@ function boardDraw(k){
  return c}
 function boardDlg(){
  BCV=boardDraw(view);openDlg('<div id="bwrap" style="overflow:auto"></div><div class="row" style="margin-top:12px"><button class="sp" onclick="dlg.close()">关闭 Đóng</button><button class="sp pri" onclick="boardSave()">📤 保存/发送图片 Lưu/gửi ảnh</button></div>');
- dlg.style.width='min(96vw,620px)';BCV.style.width='100%';BCV.style.height='auto';document.getElementById('bwrap').appendChild(BCV)}
+ dlg.style.maxWidth='min(100vw,640px)';BCV.style.width='100%';BCV.style.height='auto';document.getElementById('bwrap').appendChild(BCV)}
 function boardSave(){if(!BCV)return;BCV.toBlob(b=>{const f=new File([b],'kho-'+view+'.png',{type:'image/png'});
  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(()=>{})}else dl(f.name,b)},'image/png')}
 function backDlg(){const n=T(Date.now());
  openDlg(`<b>补录 Thêm bù (việc đã làm)</b>
  <label>工作 Việc</label><select id="ba">${ACTS.filter(a=>!a.hide).map(a=>`<option value="${a.id}">${a.zh} ${a.vi}</option>`).join('')}</select>
- <label>开始 Từ</label><input id="bs" type="time" value="08:00">
- <label>结束 Đến</label><input id="be" type="time" value="${n}">
+ <label>开始 Từ</label>${tf('bs','08:00')}
+ <label>结束 Đến</label>${tf('be',n)}
  <label>名称 Tên (nếu chọn Khác)</label><input id="bn" autocomplete="off">
  <label>去向 Đến (nếu đi bộ)</label><select id="bt"><option value="">-</option>${PLACES.map(p=>`<option value="${p[0]}">${pl(p)}</option>`).join('')}</select>
- <div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="saveBack(false)">保存 + 再加 Lưu & thêm</button><button class="sp pri" onclick="saveBack(true)">保存 Lưu</button></div>`)}
-function saveBack(close){const s=toMs(view,bs.value),e=toMs(view,be.value);if(!(e>s)){alert('结束要晚于开始 / Giờ kết thúc phải sau giờ bắt đầu');return}day().log.push({id:uid(),act:ba.value,start:s,end:e,to:ba.value==='walk'?bt.value:(ba.value==='other'?bn.value.trim():'')});day().log.sort((a,b)=>a.start-b.start);save();render();if(close)dlg.close();else{bs.value=be.value;be.value=''}}
-function backTruckDlg(){openDlg(`<b>补录车辆 Thêm xe bù</b><label>进磅时间 Giờ cân vào</label><input id="bk" type="time" value="08:00"><div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="{const id=addTruck(toMs(view,bk.value));dlg.close();tEditDlg(id)}">下一步 Tiếp: nhập các mốc</button></div>`)}
+ <button class="pri full" style="margin-top:16px;min-height:50px" onclick="saveBack(true)">保存 Lưu</button><div class="row" style="margin-top:8px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp" onclick="saveBack(false)">保存 + 再加 Lưu & thêm</button></div>`)}
+function saveBack(close){const s=toMs(view,tfVal('bs')),e=toMs(view,tfVal('be'));if(!(e>s)){alert('结束要晚于开始 / Giờ kết thúc phải sau giờ bắt đầu');return}day().log.push({id:uid(),act:ba.value,start:s,end:e,to:ba.value==='walk'?bt.value:(ba.value==='other'?bn.value.trim():'')});day().log.sort((a,b)=>a.start-b.start);save();render();if(close)dlg.close();else{bs.value=be.value;be.value=''}}
 function editDlg(id){
  const e=day().log.find(x=>x.id===id);
  openDlg(`<b>编辑 Sửa</b>
  <label>工作 Việc</label><select id="ea">${ACTS.map(a=>`<option value="${a.id}" ${a.id===e.act?'selected':''}>${a.zh} ${a.vi}</option>`).join('')}</select>
- <label>开始 Bắt đầu</label><input id="es" type="time" value="${T(e.start)}">
- <label>结束 Kết thúc ${e.end?'':'(đang chạy)'}</label><input id="ee" type="time" value="${e.end?T(e.end):''}">
+ <label>开始 Bắt đầu</label>${tf('es',T(e.start))}
+ <label>结束 Kết thúc ${e.end?'':'(đang chạy)'}</label>${tf('ee',e.end?T(e.end):'')}
  ${e.act==='other'?`<label>名称 Tên việc</label><input id="eon" autocomplete="off" value="${esc(e.to||'')}">`:''}
  ${e.act==='walk'?`<label>去向 Đến</label><select id="eto"><option value="">-</option>${PLACES.map(p=>`<option value="${p[0]}" ${e.to===p[0]?'selected':''}>${pl(p)}</option>`).join('')}</select>`:''}
  <div class="row" style="margin-top:14px"><button class="bad" onclick="delLog('${id}')">删除 Xoá</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="saveLog('${id}')">保存 Lưu</button></div>`)}
-function saveLog(id){const e=day().log.find(x=>x.id===id);e.act=ea.value;if(window.eto)e.to=eto.value;if(window.eon)e.to=eon.value.trim();if(es.value)e.start=toMs(view,es.value);e.end=ee.value?toMs(view,ee.value):(e.end?e.end:null);if(e.end&&e.end<e.start)e.end=e.start;day().log.sort((a,b)=>a.start-b.start);save();dlg.close();render()}
+function saveLog(id){const e=day().log.find(x=>x.id===id);e.act=ea.value;if(window.eto)e.to=eto.value;if(window.eon)e.to=eon.value.trim();const sv=tfVal('es'),ev=tfVal('ee');if(sv)e.start=toMs(view,sv);e.end=ev?toMs(view,ev):(e.end?e.end:null);if(e.end&&e.end<e.start)e.end=e.start;day().log.sort((a,b)=>a.start-b.start);save();dlg.close();render()}
 function delLog(id){day().log=day().log.filter(x=>x.id!==id);save();dlg.close();render()}
 function tEditDlg(id){const t=truck(id);
  openDlg(`<b>修改 Sửa ${tname(t)}</b><label>货物 Loại hàng</label><select id="t0">${TYPES.filter(x=>!x[5]||x[0]===t.type).map(x=>`<option value="${x[0]}" ${t.type===x[0]?'selected':''}>${x[1]} ${x[2]}</option>`).join('')}</select>
- <label>开始 Bắt đầu nhận</label><input id="t1" type="time" value="${T(t.win||t.start||t.arrive)}">
- <label>完成 Xong</label><input id="t5" type="time" value="${t.done||t.end?T(t.done||t.end):''}">
+ <label>开始 Bắt đầu nhận</label>${tf('t1',T(t.win||t.start||t.arrive))}
+ <label>完成 Xong</label>${tf('t5',t.done||t.end?T(t.done||t.end):'')}
  <div class="row" style="margin-top:14px"><button class="bad" onclick="dlg.close();tDel('${id}')">删除</button><span class="sp"></span><button onclick="dlg.close()">取消</button><button class="pri" onclick="tSave('${id}')">保存 Lưu</button></div>`)}
-function tSave(id){const t=truck(id),g=i=>{const x=document.getElementById(i);return x&&x.value?toMs(view,x.value):null};
+function tSave(id){const t=truck(id),g=i=>{const v=tfVal(i);return v?toMs(view,v):null};
  t.type=t0.value;t.arrive=t.win=t.start=g('t1')||t.arrive;t.end=t.wout=t.done=g('t5');t.m=1;save();dlg.close();render()}
 function backTruckDlg(){openDlg(`<b>补录车辆 Thêm xe bù</b><label>货物 Loại hàng</label><select id="bk0">${TYPES.filter(x=>!x[5]).map(x=>`<option value="${x[0]}">${x[1]} ${x[2]}</option>`).join('')}</select>
- <label>开始 Từ</label><input id="bk1" type="time" value="08:00"><label>完成 Đến</label><input id="bk2" type="time" value="${T(Date.now())}">
- <div class="row" style="margin-top:14px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp pri" onclick="saveBackTruck(false)">保存 + 再加</button><button class="sp pri" onclick="saveBackTruck(true)">保存 Lưu</button></div>`)}
-function saveBackTruck(close){const s=toMs(view,bk1.value),e=toMs(view,bk2.value);if(!(e>s)){alert('完成要晚于开始 / Giờ xong phải sau giờ bắt đầu');return}addTruck(bk0.value,s,e);if(close)dlg.close();else{bk1.value=bk2.value;bk2.value=''}}
+ <label>开始 Từ</label>${tf('bk1','08:00')}<label>完成 Đến</label>${tf('bk2',T(Date.now()))}
+ <button class="pri full" style="margin-top:16px;min-height:50px" onclick="saveBackTruck(true)">保存 Lưu</button><div class="row" style="margin-top:8px"><button class="sp" onclick="dlg.close()">取消</button><button class="sp" onclick="saveBackTruck(false)">保存 + 再加 Lưu & thêm</button></div>`)}
+function saveBackTruck(close){const s=toMs(view,tfVal('bk1')),e=toMs(view,tfVal('bk2'));if(!(e>s)){alert('完成要晚于开始 / Giờ xong phải sau giờ bắt đầu');return}addTruck(bk0.value,s,e);if(close)dlg.close();else{bk1.value=bk2.value;bk2.value=''}}
 // ---- stats
 function stats(k){
  const d=day(k),now=Date.now(),by={};let tot=0;
@@ -284,38 +332,70 @@ function stats(k){
 function trLine(t){const a=t.win||t.start||t.arrive,e=t.done||t.end,u=mins(a,e||Date.now());return `${tname(t)} ${T(a)}-${e?T(e):'进行中'} (${D(u)})${t.type==='coil'&&u>STD?' 超'+(u-STD)+"'":''}${t.reasons.length?' | 原因: '+t.reasons.join('、'):''}`}
 
 // ---- render
-function render(){
- const d=day(),st=stats(view),act=d.log.find(e=>!e.end),td=isToday();
- let h=`<div class="row" style="padding-top:max(12px,env(safe-area-inset-top))"><button onclick="shift(-1)">◀</button><div class="sp" style="text-align:center"><b>${view}</b><br><small>资材课 · Nhật ký kho${td?'':' · <span class=bad>xem ngày cũ</span>'}</small><br><small id="st" class="mu"></small></div><button onclick="shift(1)">▶</button></div>`;
- if(!td)h+=`<div class="banner">Đang xem ngày cũ — chỉ sửa/xuất được. <a href="#" onclick="view=dk(Date.now());render();return false">Về hôm nay 回到今天</a></div>`;
- h+=`<div class="card now" style="margin-top:10px">${act?`<div class="mu">进行中 Đang làm</div><div class="n" style="color:${A[act.act].c}">${an(act)} ${anv(act)}</div><div class="t" id="tick" data-s="${act.start}">00:00:00</div><small>从 ${T(act.start)} 开始</small>${act.act==='walk'?`<div class="chips" style="justify-content:center"><small class="mu">去 Đến:</small>${PLACES.map(p=>`<button class="chip ${act.to===p[0]?'sel':''}" onclick="setTo('${act.id}','${p[0]}')">${pl(p)}</button>`).join('')}</div>`:''}`:`<div class="mu">未开始 Chưa bắt đầu</div><div class="t">--:--</div><small>点下面按钮开始 Bấm nút bên dưới</small>`}</div>`;
- h+=`<h2>工作 Công việc (1 chạm) <button class="chip" style="float:right" onclick="cfgDlg('acts')">✎ 编辑 Sửa nút</button></h2><div class="grid">${ACTS.filter(a=>!a.hide).map(a=>`<button class="act ${act&&act.act===a.id?'on':''}" style="--c:${a.c}" ${td?'':'disabled'} onclick="${a.id==='other'?'otherDlg()':`startAct('${a.id}')`}"><b>${a.id==='walk'?'🚶 ':''}${a.zh}</b><small>${a.vi}</small></button>`).join('')}</div>`;
- const nOpen=st.trucks.filter(t=>stage(t)!=='done').length;
- if(td&&act&&(act.act==='walk'||A[act.act].w)&&nOpen)h+=`<button class="pri" style="width:100%;margin-top:8px;padding:14px;font-size:17px" onclick="startAct('recv')">↩ 回收货 Về nhận hàng (còn ${nOpen} xe)</button>`;
- if(td&&act)h+=`<button style="width:100%;margin-top:8px" onclick="stopAct()">⏹ 停止/下班 Dừng</button>`;
- h+=`<h2>收货 Nhận hàng · chạm đúng loại hàng <button class="chip" style="float:right" onclick="cfgDlg('types')">✎ 编辑 Sửa nút</button></h2>`;
- if(td)h+=`<div class="grid">${TYPES.filter(x=>!x[5]).map(x=>`<button class="act" style="--c:${TC[x[0]]}" onclick="addTruck('${x[0]}')"><b>${x[1]}</b><small>${x[2]} · +1 xe</small></button>`).join('')}</div>`;
- h+=`<button style="width:100%;margin:8px 0" onclick="backTruckDlg()">＋ 补录车辆 Thêm xe bù</button>`;
- const act0=st.trucks.filter(t=>stage(t)!=='done'),done0=st.trucks.filter(t=>stage(t)==='done');
- const truckCard=t=>{const s=stage(t),ty=tyOf(t),nm=tname(t),a=t.win||t.start||t.arrive,en=t.done||t.end,u=mins(a,en||Date.now()),over=t.type==='coil'&&u>STD;
-  if(s==='done'&&!EXP[t.id])return `<div class="card truck row" onclick="EXP['${t.id}']=1;render()" style="padding:8px 12px;opacity:.85"><span class="sp">✔ <b>${nm}</b> <small>${ty[2]}</small></span><small>${T(a)}–${T(en)} · ${D(u)}${over?' · <span class=bad>+'+(u-STD)+"'</span>":''}</small></div>`;
-  const showR=over||t.reasons.length||s==='done';
-  return `<div class="card truck" style="${over?'border-color:var(--warn)':''}"><div class="h"><span onclick="tEditDlg('${t.id}')">${nm} <small>${ty[2]}</small> ✎</span><small>${s==='done'?'<a href="#" onclick="delete EXP[\''+t.id+'\'];render();return false">▲</a>':'开始 '+T(a)}</small></div>
-  <div class="kv" style="grid-template-columns:1fr"><div><small>${s==='done'?T(a)+'–'+T(en):'进行中 Đang nhận'}</small><b class="${over?'bad ':''}${en?'':'tu'}" ${en?'':'data-s="'+a+'"'}>${D(u)}</b></div></div>
+// 4 tab (工作 việc · 收货 xe · 明细 nhật ký · 汇总 tổng) + thanh dính trên cùng (ngày + việc đang làm, luôn thấy giờ chạy và nút dừng)
+let TAB=(()=>{try{return localStorage.getItem('kholog.tab')||'work'}catch(e){return 'work'}})();
+function setTab(t){TAB=t;try{localStorage.setItem('kholog.tab',t)}catch(e){}render();window.scrollTo(0,0)}
+const WDN=['周日 CN','周一 T2','周二 T3','周三 T4','周四 T5','周五 T6','周六 T7'];
+function wdOf(k){const [y,m,d]=k.split('-').map(Number);return WDN[new Date(y,m-1,d).getDay()]}
+function jumpDate(){const i=document.createElement('input');i.type='date';i.value=view;i.style.cssText='position:fixed;left:0;top:0;opacity:0;pointer-events:none;width:1px;min-height:0';
+ i.onchange=()=>{if(i.value){view=i.value;render()}i.remove()};document.body.appendChild(i);try{i.showPicker()}catch(e){i.click()}}
+function headHtml(td,act,st){
+ let h=`<div><div class="hd"><button class="ib" onclick="shift(-1)" aria-label="prev">◀</button><div class="hc" onclick="jumpDate()"><b>${view}</b> <small style="display:inline">${wdOf(view)}</small><small>资材课 · Nhật ký kho${td?'':' · <span class=bad>ngày cũ</span>'}</small><small id="st" class="mu"></small></div><button class="ib" onclick="shift(1)" aria-label="next">▶</button></div>`;
+ if(!td)h+=`<div class="banner">Đang xem ngày cũ — chỉ sửa/xuất được · <a href="#" onclick="view=dk(Date.now());render();return false">Về hôm nay 回到今天</a></div>`;
+ else if(act){const a=A[act.act];h+=`<div class="now" style="--c:${a.c}"><div class="nm"><b>${esc(an(act))}</b><small>${esc(anv(act))||'从 '+T(act.start)+' 开始'}</small></div><div class="tm" id="tick" data-s="${act.start}">00:00:00</div><button class="stop" onclick="stopAct()" aria-label="stop">⏹</button></div>`;
+  if(act.act==='walk')h+=`<div class="chips sub"><small class="mu" style="align-self:center">去 Đến:</small>${PLACES.map(p=>`<button class="chip ${act.to===p[0]?'sel':''}" onclick="setTo('${act.id}','${p[0]}')">${pl(p)}</button>`).join('')}</div>`;
+  const nOpen=st.trucks.filter(t=>stage(t)!=='done').length;
+  if((act.act==='walk'||A[act.act].w)&&nOpen)h+=`<button class="pri full sub" onclick="startAct('recv')">↩ 回收货 Về nhận hàng (còn ${nOpen} xe)</button>`}
+ else h+=`<div class="now idle"><div class="nm"><b>未开始 Chưa bắt đầu</b><small>点下面按钮开始 · Chạm một việc bên dưới</small></div></div>`;
+ return h+'</div>'}
+function tabWork(td,act){
+ return `<div class="sh"><h2>工作 Công việc · 1 chạm</h2><button class="ghost" onclick="cfgDlg('acts')">✎ Sửa nút</button></div><div class="grid">${ACTS.filter(a=>!a.hide).map(a=>`<button class="act ${act&&act.act===a.id?'on':''}" style="--c:${a.c}" ${td?'':'disabled'} onclick="${a.id==='other'?'otherDlg()':`startAct('${a.id}')`}"><b>${a.id==='walk'?'🚶 ':''}${a.zh}</b><small>${a.vi}</small></button>`).join('')}</div>`}
+function truckCard(t,td){
+ const s=stage(t),ty=tyOf(t),nm=tname(t),a=t.win||t.start||t.arrive,en=t.done||t.end,u=mins(a,en||Date.now()),over=t.type==='coil'&&u>STD;
+ if(s==='done'&&!EXP[t.id])return `<div class="card truck row" onclick="EXP['${t.id}']=1;render()" style="min-height:48px;padding:8px 12px;opacity:.9;cursor:pointer"><span class="sp">✔ <b>${nm}</b> <small>${ty[2]}</small></span><small>${T(a)}–${T(en)} · ${D(u)}${over?' · <span class=bad>+'+(u-STD)+"'</span>":''}</small></div>`;
+ const showR=over||t.reasons.length||s==='done';
+ return `<div class="card truck" style="${over?'border-color:var(--warn)':''}"><div class="h"><span onclick="tEditDlg('${t.id}')" style="cursor:pointer">${nm} <small>${ty[2]}</small> ✎</span><small>${s==='done'?'<a href="#" onclick="delete EXP[\''+t.id+'\'];render();return false">▲ thu gọn</a>':'开始 '+T(a)}</small></div>
+  <div class="big ${over?'bad ':''}${en?'':'tu'}" ${en?'':'data-s="'+a+'"'}>${D(u)}</div><small>${s==='done'?T(a)+'–'+T(en):'进行中 Đang nhận'}</small>
   ${over?`<div class="bad" style="font-weight:700;margin-top:6px">⚠ 超标准 vượt chuẩn ${STD}' → +${u-STD}'</div>`:''}
-  ${td&&s!=='done'?`<button class="pri" style="width:100%;margin-top:8px;padding:14px;font-size:18px;background:var(--ok);border-color:var(--ok)" onclick="tStep('${t.id}')">✔ 完成 Xong</button>`:''}
-  ${showR?`<div class="chips">${REASONS.map(r=>`<button class="chip ${t.reasons.includes(r[0])?'on':''}" onclick="tReason('${t.id}','${r[0]}')">${r[0]} <small style="color:inherit;opacity:.7">${r[1]}</small></button>`).join('')}</div>`:''}</div>`};
- act0.concat(done0).forEach(t=>{h+=truckCard(t)});
+  ${td&&s!=='done'?`<button class="ok full" style="margin-top:10px;min-height:54px;font-size:18px" onclick="tStep('${t.id}')">✔ 完成 Xong</button>`:''}
+  ${showR?`<div class="chips">${REASONS.map(r=>`<button class="chip ${t.reasons.includes(r[0])?'on':''}" onclick="tReason('${t.id}','${r[0]}')">${r[0]} <small style="color:inherit;opacity:.7">${r[1]}</small></button>`).join('')}</div>`:''}</div>`}
+function tabTruck(td,st){
+ let h=`<div class="sh"><h2>收货 Nhận hàng · +1 xe</h2><button class="ghost" onclick="cfgDlg('types')">✎ Sửa nút</button></div>`;
+ if(td)h+=`<div class="grid">${TYPES.filter(x=>!x[5]).map(x=>`<button class="act" style="--c:${TC[x[0]]}" onclick="addTruck('${x[0]}')"><b>${x[1]}</b><small>${x[2]} · +1 xe</small></button>`).join('')}</div>`;
+ h+=`<button class="full" style="margin:10px 0" onclick="backTruckDlg()">＋ 补录车辆 Thêm xe bù</button>`;
+ const act0=st.trucks.filter(t=>stage(t)!=='done'),done0=st.trucks.filter(t=>stage(t)==='done');
+ act0.concat(done0).forEach(t=>{h+=truckCard(t,td)});
  if(!st.trucks.length)h+=`<small>Chưa có xe nào hôm nay.</small>`;
- h+=`<h2>时间明细 Chi tiết (chạm để sửa)</h2><button style="width:100%;margin-bottom:8px" onclick="backDlg()">＋ 补录工作 Thêm việc bù</button><div class="card">${d.log.length?d.log.slice().reverse().map(e=>{const a=A[e.act];return `<div class="log" onclick="editDlg('${e.id}')"><span class="dot" style="background:${a.c}"></span><b>${T(e.start)}–${e.end?T(e.end):'…'}</b><span class="sp">${esc(an(e))}${e.act==='walk'&&e.to?' → '+esc(e.to):''} <small>${anv(e)}</small></span><b>${D(mins(e.start,e.end||Date.now()))}</b></div>`}).join(''):'<small>Trống</small>'}</div>`;
- h+=`<button class="pri" style="width:100%;margin-top:14px;padding:14px;font-size:17px" onclick="boardDlg()">📊 老板看板 Bảng cho sếp (Gantt)</button>`;
- h+=`<h2>汇总 Tổng hợp</h2><div class="card"><div class="row"><b>已记录 Tổng</b><span class="sp"></span><b>${D(st.tot)}</b></div><div class="row"><span>净工作 Làm việc thực</span><span class="sp"></span><b>${D(Math.max(0,st.tot-st.wait-st.walk.m-(st.by.rest||0)))}</b></div><div class="row"><span class="bad">等待 Chờ/gián đoạn</span><span class="sp"></span><b class="bad">${D(st.wait)} (${st.tot?Math.round(st.wait*100/st.tot):0}%)</b></div>
+ return h}
+function tabLog(d,td){
+ return `<div class="sh"><h2>时间明细 Nhật ký · chạm để sửa</h2></div><button class="full" style="margin-bottom:10px" onclick="backDlg()">＋ 补录工作 Thêm việc bù</button><div class="card" style="padding:4px 8px">${d.log.length?d.log.slice().reverse().map(e=>{const a=A[e.act];return `<div class="log" onclick="editDlg('${e.id}')"><span class="dot" style="background:${a.c}"></span><b class="t tr">${T(e.start)}–${e.end?T(e.end):'…'}</b><span class="sp">${esc(an(e))}${e.act==='walk'&&e.to?' → '+esc(e.to):''} <small>${esc(anv(e))}</small></span><b class="t td">${D(mins(e.start,e.end||Date.now()))}</b></div>`}).join(''):'<small style="display:block;padding:14px">Trống · chưa có việc nào</small>'}</div>`}
+function tabSum(st){
+ let h=`<button class="pri full" style="margin-top:4px;min-height:52px;font-size:17px" onclick="boardDlg()">📊 老板看板 Bảng cho sếp (Gantt)</button>
+ <div class="sh"><h2>汇总 Tổng hợp</h2></div><div class="card"><div class="row"><b>已记录 Tổng</b><span class="sp"></span><b>${D(st.tot)}</b></div><div class="row"><span>净工作 Làm việc thực</span><span class="sp"></span><b>${D(Math.max(0,st.tot-st.wait-st.walk.m-(st.by.rest||0)))}</b></div><div class="row"><span class="bad">等待 Chờ/gián đoạn</span><span class="sp"></span><b class="bad">${D(st.wait)} (${st.tot?Math.round(st.wait*100/st.tot):0}%)</b></div>
  ${st.walk.n?`<div class="row" style="color:#d97706"><span>🚶 步行 Đi bộ</span><span class="sp"></span><b>${st.walk.n} 趟/lượt · ${D(st.walk.m)} · TB ${Math.round(st.walk.m/st.walk.n)}'/lượt</b></div>`:''}
- ${actList(st).map(a=>`<div style="margin-top:8px"><div class="row"><span>${a.zh} <small>${a.vi}</small></span><span class="sp"></span><span>${D(st.by[a.id])} · ${Math.round(st.by[a.id]*100/st.tot)}%</span></div><div class="bar"><i style="width:${st.by[a.id]*100/st.tot}%;background:${a.c}"></i></div></div>`).join('')}</div>`;
- h+=`<div class="row" style="margin-top:10px"><button class="sp" onclick="copyRep()">📋 复制报告 Copy</button><button class="sp" onclick="xlsx()">📊 Excel</button></div><pre id="rep">${esc(report())}</pre>
- <div class="row" style="margin-top:14px"><button class="sp" onclick="exportJson()">备份 Backup</button><button class="sp" onclick="importDlg()">还原 Restore</button></div>`;
- document.getElementById('app').innerHTML=h;tick();setSt();
+ ${actList(st).map(a=>`<div style="margin-top:10px"><div class="row"><span>${a.zh} <small>${a.vi}</small></span><span class="sp"></span><span style="white-space:nowrap">${D(st.by[a.id])} · ${Math.round(st.by[a.id]*100/st.tot)}%</span></div><div class="bar"><i style="width:${st.by[a.id]*100/st.tot}%;background:${a.c}"></i></div></div>`).join('')}</div>
+ <div class="row" style="margin-top:10px"><button class="sp" onclick="copyRep()">📋 复制报告 Copy</button><button class="sp" onclick="xlsx()">📊 Excel</button></div>
+ <details><summary>📄 报告文本 Xem nội dung báo cáo</summary><pre id="rep">${esc(report())}</pre></details>
+ <details><summary>💾 数据 Sao lưu / khôi phục</summary><div class="row"><button class="sp" onclick="exportJson()">备份 Backup</button><button class="sp" onclick="importDlg()">还原 Restore</button></div></details>`;
+ return h}
+function navHtml(nOpen){
+ return [['work','🛠','工作','Việc',0],['truck','🚚','收货','Xe',nOpen],['log','🕒','明细','Nhật ký',0],['sum','📊','汇总','Tổng',0]].map(x=>`<button class="${TAB===x[0]?'on':''}" onclick="setTab('${x[0]}')"><i>${x[1]}${x[4]?`<em>${x[4]}</em>`:''}</i><b>${x[2]}</b><small>${x[3]}</small></button>`).join('')}
+function render(){
+ const d=day(),st=stats(view),act=d.log.find(e=>!e.end),td=isToday(),nOpen=st.trucks.filter(t=>stage(t)!=='done').length,g=id=>document.getElementById(id);
+ g('top').innerHTML=headHtml(td,act,st);
+ g('app').innerHTML=TAB==='truck'?tabTruck(td,st):TAB==='log'?tabLog(d,td):TAB==='sum'?tabSum(st):tabWork(td,act);
+ g('nav').innerHTML=navHtml(nOpen);
+ tick();setSt();
 }
+// ---- ô giờ gõ số (thay đồng hồ xoay của Android): "0830" → 08:30, nút −5/+5/Bây giờ
+function tf(id,v){return `<div class="tf"><button type="button" onclick="tfAdj('${id}',-5)">−5'</button><input id="${id}" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="hh:mm" value="${v||''}" oninput="tfFmt(this)" onblur="tfNorm(this)"><button type="button" onclick="tfAdj('${id}',5)">+5'</button><button type="button" onclick="tfNow('${id}')">现在</button></div>`}
+function tfFmt(el){const d=el.value.replace(/\D/g,'').slice(0,4);el.value=d.length>2?d.slice(0,2)+':'+d.slice(2):d}
+function tfParse(s){const d=String(s||'').replace(/\D/g,'');if(!d)return null;let h,m;if(d.length<=2){h=+d;m=0}else{h=+d.slice(0,d.length-2);m=+d.slice(-2)}return h>23||m>59?null:h*60+m}
+function tfSet(el,min){el.value=String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0')}
+function tfNorm(el){const m=tfParse(el.value);if(m==null)el.value='';else tfSet(el,m)}
+function tfVal(id){const el=document.getElementById(id);if(!el)return '';tfNorm(el);return el.value}
+function tfAdj(id,dm){const el=document.getElementById(id);let m=tfParse(el.value);if(m==null){const n=new Date();m=n.getHours()*60+n.getMinutes()}tfSet(el,((m+dm)%1440+1440)%1440)}
+function tfNow(id){const n=new Date();tfSet(document.getElementById(id),n.getHours()*60+n.getMinutes())}
 function tick(){const now=Date.now(),t=document.getElementById('tick');if(t){let s=Math.max(0,Math.floor((now-t.dataset.s)/1000));t.textContent=[Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,'0')).join(':')}
  document.querySelectorAll('.tu').forEach(u=>u.textContent=D(mins(+u.dataset.s,now)))}
 setInterval(tick,1000);setInterval(()=>{if(isToday())softRender()},60000);
