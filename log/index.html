@@ -570,6 +570,9 @@ window.addEventListener('online',()=>schedule(0));
 schedule(0);
 render();
 </script>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});</script>
+<script>if('serviceWorker' in navigator){var hadSW=!!navigator.serviceWorker.controller,rl=0,want=0;
+function swRl(){if(want&&!rl&&!document.querySelector('dialog[open]')){rl=1;location.reload()}}
+navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){swRl();r.update().catch(function(){})}})}).catch(function(){});
+navigator.serviceWorker.addEventListener('controllerchange',function(){if(hadSW){want=1;swRl()}});}</script>
 </body>
 </html>
